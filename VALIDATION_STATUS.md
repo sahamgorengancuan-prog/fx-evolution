@@ -120,11 +120,30 @@ Legend: ✅ VERIFIED (test evidence) · 🟡 PARTIAL · ⏳ PENDING · ❌ NOT B
 | Live LLM call (OpenAI/OpenRouter) | ⏳ PENDING | never executed from this repo; exercised via dashboard in Phase 9 |
 | Proposal sandbox compilation | ❌ | KNOWN_LIMITATIONS.md #33 |
 
+## Phase 7 — statistical validation framework
+
+| Claim | Status | Evidence |
+|---|---|---|
+| PBO rejects single candidates (v8 S1 regression, API-level) | ✅ | `tests/unit/test_validation_pbo.py::test_single_candidate_is_rejected` |
+| PBO: planted overfit → >0.8; true edge → <0.2; noise ≈ 0.5 | ✅ | `tests/unit/test_validation_pbo.py` |
+| CPCV: C(S,k) combinations, purge+embargo invariants, deterministic | ✅ | `tests/unit/test_validation_bootstrap_cpcv.py::TestCPCV` |
+| Effective trials: identical→1, independent→N, correlated in between | ✅ | `tests/unit/test_validation_sharpe.py::TestEffectiveTrials` |
+| PSR: 0.5 at own SR, →1 for strong edge, low for noise vs high benchmark | ✅ | `tests/unit/test_validation_sharpe.py::TestPSR` |
+| DSR decreases with trials; effective-N deflates less than raw N (v8 S3 fix) | ✅ | `tests/unit/test_validation_sharpe.py::TestDSR` |
+| Block bootstrap seeded/deterministic; Sharpe CI brackets truth | ✅ | `tests/unit/test_validation_bootstrap_cpcv.py::TestBootstrap` |
+| Drawdown distribution as a path statistic (legitimate resampling use) | ✅ | `TestBootstrap::test_drawdown_distribution_is_path_statistic` |
+| Reality Check: noise → high median p (5 seeds), edge → p<0.05 | ✅ | `TestRealityCheck` |
+| Cost stress erodes returns monotonically on pinned-trade fixture | ✅ | `tests/unit/test_validation_stress.py` |
+| Parameter/start-offset stress seeded, JSON-safe reports | ✅ | `tests/unit/test_validation_stress.py` |
+| Return concentration hand-computed (top-k shares, HHI) | ✅ | `tests/unit/test_validation_bootstrap_cpcv.py::TestConcentration` |
+| Terminal-return permutation API absent by construction (v8 S2) | ✅ | `TestForbiddenApis::test_terminal_return_permutation_api_does_not_exist` |
+| Hansen SPA | ❌ | KNOWN_LIMITATIONS.md #37 |
+| CPCV evaluation harness over real candidate batteries | ⏳ | Phase 9 orchestration |
+
 ## Later phases
 
 | Component | Status |
 |---|---|
-| Statistical validation (Phase 7) | ❌ NOT BUILT |
 | MQL5 export/parity (Phase 8) | ❌ NOT BUILT |
 
 No performance claim of any kind is validated. The v8 artifacts' metrics

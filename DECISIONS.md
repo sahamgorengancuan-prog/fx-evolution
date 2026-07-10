@@ -203,3 +203,30 @@ have full ADRs in `docs/adr/`.
     monitoring, results download); Python engine = compute plane. A
     Worker cannot and must not run the search or compute fitness; it
     also never stores lockbox data. Details in docs/PHASE_PLAN.md §9.
+
+## 2026-07-10 — Phase 7
+
+47. **PBO rejects single-candidate input by construction** — the v8
+    misnomer (a per-strategy "pbo") is now an impossible API call, with
+    an error message citing the audit finding.
+48. **Effective trials via the participation ratio** of the candidate
+    correlation spectrum: (Σλ)²/Σλ². Identical candidates → 1,
+    independent → N; simple, deterministic, testable. Cluster-based
+    estimators can replace it later behind the same function.
+49. **DSR's across-trial SR variance defaults to the estimator variance**
+    of the strategy's own SR when the battery's SR variance isn't
+    supplied — a documented approximation, not a hidden one.
+50. **Statistical tests on noise are themselves noisy**: the Reality
+    Check unit test asserts the MEDIAN p-value over five seeded noise
+    batteries (a single 5% test rejects noise 5% of the time — asserting
+    one draw would be a flake by design).
+51. **Stress harnesses re-run the real Tier-A engine** under scaled
+    costs / jittered risk / shifted windows — they perturb economics and
+    paths, unlike v8's permutation which changed neither. The cost-stress
+    fixture pins its trade list (max_bars-only exits) so monotone
+    erosion is provable.
+52. **No terminal-return permutation API exists** anywhere in
+    `evoquant.validation`; a package-scanning test keeps it that way.
+53. **White's Reality Check over SPA** for Phase 7: simpler, standard,
+    sufficient for the one-pair experiment; Hansen's SPA is a listed
+    upgrade, not a silent absence.

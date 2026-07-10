@@ -135,3 +135,21 @@ Honest inventory. Anything listed here is *by design not claimed to work*.
     experiment must answer; posteriors are replayable either way.
 36. **Lesson confidence is caller-asserted.** No calibration mechanism
     yet; treat it as an ordering heuristic, not a probability.
+
+## Phase 7 (current)
+
+37. **Hansen's SPA is not implemented** — White's Reality Check only.
+    SPA's studentization and better power matter for large batteries.
+38. **Effective-trials estimator is spectrum-based**, one of several
+    defensible choices; it has not been benchmarked against clustered
+    alternatives on this data.
+39. **CPCV generates splits; the CPCV *evaluation harness*** (running a
+    candidate battery over all splits to build the PBO matrix from real
+    backtests) lands in Phase 9's experiment orchestration.
+40. **Stress coverage gaps**: latency perturbation and fill-rejection
+    stress exist only in Tier B's parameters, not yet as first-class
+    validation reports; regime-sequence stress not implemented.
+41. **The DSR default variance approximation** (estimator variance of the
+    strategy's own SR) understates cross-trial dispersion when the
+    battery is heterogeneous; pass the battery's actual SR variance when
+    available.

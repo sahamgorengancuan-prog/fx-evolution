@@ -5,15 +5,16 @@ A **universal search engine**, not a universal strategy: shared evaluation
 protocol and governance, pair-specific policies, `NO_EDGE_FOUND` as a
 first-class outcome.
 
-**Status: Phase 6** — sealed data governance (P1), dimension-typed
+**Status: Phase 7** — sealed data governance (P1), dimension-typed
 causal DSL (P2), two-tier backtesting with fail-closed labeled costs
 (P3), train-only pair-regime layer (P4), constraint-dominance search core
 with a logged escalation ladder and first-class `NO_EDGE_FOUND` (P5), and
-the evolutionary memory + LLM layer (P6): an append-only event store,
-semantic lessons, a contextual Thompson-sampling operator bandit wired
-into the island, and strict OpenAI/OpenRouter agent contracts — no
-fitness authority, no lockbox visibility, keys via env vars only.
-No performance claims.
+the evolutionary memory + LLM layer (P6), and the statistical
+validation framework (P7): CPCV, candidate-matrix PBO (CSCV),
+probabilistic/deflated Sharpe with EFFECTIVE trial counts, block
+bootstrap, White's Reality Check, cost/parameter/start stress, return
+concentration — and the order-invariant terminal-return permutation
+"test" is absent by construction. No performance claims.
 
 - Forensic audit of the previous (v8) system: [`docs/FORENSIC_AUDIT.md`](docs/FORENSIC_AUDIT.md)
 - Phase plan & acceptance criteria: [`docs/PHASE_PLAN.md`](docs/PHASE_PLAN.md)
@@ -97,6 +98,13 @@ src/evoquant/
   llm/
     contracts.py       strict agent JSON contracts + lockbox-leak guard
     client.py          OpenAI/OpenRouter chat client (env keys, fail closed)
+  validation/
+    cpcv.py            combinatorially purged CV split generation
+    pbo.py             real PBO via CSCV over candidate matrices
+    sharpe.py          PSR, DSR, effective trial counts
+    bootstrap.py       block bootstrap CIs, DD distribution, Reality Check
+    stress.py          cost / parameter / start-offset stress harnesses
+    concentration.py   return-concentration diagnostics
   cli.py
 ```
 
