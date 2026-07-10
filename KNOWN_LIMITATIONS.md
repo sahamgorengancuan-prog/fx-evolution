@@ -39,3 +39,25 @@ Honest inventory. Anything listed here is *by design not claimed to work*.
     work.
 11. **`repro.capture` records the git commit but cannot prove the working
     tree matched it** beyond the dirty flag.
+
+## Phase 2 (current)
+
+12. **Batch feature evaluation is O(n·p) with a Python loop per window.**
+    It is the *reference* implementation: exact, causal, parity-tested.
+    It is too slow to sit inside a million-candidate search loop; Phase 5
+    must add vectorized kernels that are differentially tested against
+    this reference before use, and canonical re-evaluation stays on the
+    reference path.
+13. **The type system is intentionally over-strict.** Some meaningful
+    expressions (e.g. comparing an UNSCALED MACD line against zero) are
+    rejected and must be expressed via normalizers. This is a documented
+    trade-off, not an oversight.
+14. **`ema` has no finite warmup**: early outputs depend on the seed value
+    and are reported from bar 0. Downstream consumers that need
+    converged EMAs must discard an explicit burn-in themselves.
+15. **Indicator proposals are validated, never compiled.** There is no
+    sandbox yet (Phase 6); the formula hygiene check is a pre-filter, not
+    a security boundary.
+16. **Grammar coverage is minimal** (~30 ops). Volume-based indicators
+    beyond raw volume, session/TIME features, and multi-timeframe
+    references are not yet expressible.

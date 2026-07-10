@@ -5,9 +5,13 @@ A **universal search engine**, not a universal strategy: shared evaluation
 protocol and governance, pair-specific policies, `NO_EDGE_FOUND` as a
 first-class outcome.
 
-**Status: Phase 1** — data contracts, immutable manifests, quality gates,
-nested walk-forward splits with purge/embargo, experiment state machine,
-one-shot final lockbox. No search, no backtesting, no performance claims.
+**Status: Phase 2** — Phase 1 (data contracts, immutable manifests,
+quality gates, nested walk-forward splits with purge/embargo, experiment
+state machine, one-shot final lockbox) plus the dimension-typed causal
+feature DSL: a compiler that rejects dimensionally invalid rules at
+compile time, AST canonicalization/semantic-duplicate hashing, and
+batch/incremental evaluators with causality and parity test coverage.
+No search, no backtesting, no performance claims.
 
 - Forensic audit of the previous (v8) system: [`docs/FORENSIC_AUDIT.md`](docs/FORENSIC_AUDIT.md)
 - Phase plan & acceptance criteria: [`docs/PHASE_PLAN.md`](docs/PHASE_PLAN.md)
@@ -53,6 +57,14 @@ src/evoquant/
   experiment/
     state.py           lifecycle state machine with append-only event log
     lockbox.py         one-shot lockbox guard; research_view()
+  features/
+    types.py           dimension system (PRICE, RETURN, ..., UNSCALED)
+    ast.py             immutable typed expression nodes
+    registry.py        operator specs (type rule, lookback, batch, stream)
+    primitives.py      ~30 causal operators, batch + incremental
+    compiler.py        type checking, lookback/complexity, evaluators
+    simplifier.py      simplification, canonicalization, semantic hashing
+    proposals.py       LLM indicator-proposal schema (validation only)
   cli.py
 ```
 

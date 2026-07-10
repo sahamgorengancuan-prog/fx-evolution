@@ -55,3 +55,39 @@ have full ADRs in `docs/adr/`.
 12. **Seed policy.** Every experiment seals one integer seed; all future
     stochastic components must derive their streams from it (never
     `random.seed()` global state).
+
+## 2026-07-10 — Phase 2
+
+13. **`UNSCALED` dimension added** beyond the blueprint's nine types. A
+    difference of two like-dimensioned series (`sub`, `delta`) loses level
+    meaning; making it non-comparable forces normalization (`zscore`/
+    `rank`) before any comparison. This is exactly the constraint whose
+    absence produced the v8 champion's `rank vs ret` rule.
+14. **No `macd`/`keltner` primitives.** They are compositions
+    (`sub(ema,ema)`; `abs(sub(close, ema))`) and live in the grammar as
+    such — smaller primitive set, same expressive power, honest types.
+15. **Deliberately conservative type rules.** `abs`/`neg` only on signed
+    dimensions (RETURN/ZSCORE/UNSCALED); `add`/`sub` require matching
+    dimensions and always yield UNSCALED. False negatives (rejecting a
+    borderline-meaningful rule) are acceptable; false positives were the
+    v8 disease.
+16. **Indicator variants chosen for window-computability**: Cutler's RSI
+    (SMA gains/losses) instead of Wilder's recursive RSI; ATR as simple
+    mean of true range; Choppiness normalized to [0,1]. Each is exactly
+    reproducible incrementally, which the parity tests require. Wilder
+    variants can be added later as distinct ops.
+17. **`ema` seeds on the first finite input**; NaN inputs produce NaN
+    output without disturbing recursion state. Lookback metadata for ema
+    is 0 (recursive); prefix-invariance is what guarantees causality, not
+    warmup counting.
+18. **Batch engine is a correctness-first O(n·p) reference.** Batch and
+    stream share one window-formula implementation, so parity holds to
+    1e-12 (bitwise in most cases). Vectorized/GPU kernels come later and
+    must re-verify against this reference (ADR-004: fast kernels never
+    finalize rankings).
+19. **Comparisons involving NaN are False** (no signal), never True —
+    warmup periods cannot fire entries.
+20. **Proposal schema validates but cannot execute.** Phase 2 ships
+    `IndicatorProposal` validation (fail closed, no random fallback);
+    whitelisted compilation and sandboxing are Phase 6. Until then no LLM
+    proposal can enter the grammar at all.
