@@ -145,3 +145,30 @@ have full ADRs in `docs/adr/`.
     labels + UNKNOWN; calibrated transition uncertainty arrives with the
     probabilistic routers (HMM) and will extend, not replace, the label
     contract.
+
+## 2026-07-10 — Phase 5
+
+33. **Type-directed generation over generate-and-filter.** Random trees
+    are grown per dimension so every genome compiles by construction;
+    a validate() safety net remains, and a failed mutation returns the
+    parent flagged `applied=False` — never a silent random substitute.
+34. **Genome identity = semantic hash** of canonicalized ASTs + rounded
+    risk block. `abs(abs(x))` and `abs(x)` variants (v8 HOF ranks 1 vs 2)
+    collapse to one identity; evaluation caching and lineage use it.
+35. **PF objective capped at 10** so a lucky 3-trade candidate cannot
+    Pareto-dominate on an unstable ratio.
+36. **Stagnation progress semantics:** while a population is entirely
+    infeasible, only movement toward feasibility (feasibility rate up or
+    min violation down by a ≥0.1% relative step) counts as progress;
+    hypervolume/coverage growth among all-infeasible candidates is churn.
+    Discovered via a failing integration test where an impossible-target
+    island evaded NO_EDGE_FOUND by shuffling infeasible variety.
+37. **Budget backstop:** exhausting the compute budget without a single
+    feasible candidate ever appearing yields `NO_EDGE_FOUND`, not a
+    neutral "ran out of time" — the budget is the evidence threshold.
+38. **Operator selection is uniform in Phase 5.** The contextual
+    Thompson-sampling bandit is Phase 6; every lineage record already
+    carries the operator name so posteriors can be trained on replay.
+39. **LOCAL_REFINEMENT rung = jitter-only generation** (parameters of
+    stable structures). Full CMA-ES covariance adaptation is deferred and
+    listed in KNOWN_LIMITATIONS.

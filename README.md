@@ -5,15 +5,15 @@ A **universal search engine**, not a universal strategy: shared evaluation
 protocol and governance, pair-specific policies, `NO_EDGE_FOUND` as a
 first-class outcome.
 
-**Status: Phase 4** — data governance (Phase 1: manifests, QA, sealed
+**Status: Phase 5** — data governance (Phase 1: manifests, QA, sealed
 nested splits, one-shot lockbox), the dimension-typed causal feature DSL
-(Phase 2: compile-time rejection of dimensionally invalid rules,
-canonicalization, causality/parity-tested evaluators), two-tier
-backtesting (Phase 3: `BAR_APPROXIMATION` bar engine + `TICK_EVENT`
-engine with a fail-closed, fully labeled cost model), and the pair-regime
-layer (Phase 4: slice-local causal fingerprints and a train-only regime
-router with one-sided inference, causal min-dwell smoothing, and a
-first-class UNKNOWN state). No search, no performance claims.
+(Phase 2), two-tier backtesting with a fail-closed labeled cost model
+(Phase 3), the train-only pair-regime layer (Phase 4), and the search
+engine core (Phase 5): type-directed genome generation and mutation,
+constraint-dominance NSGA-II (never scalarized), a MAP-Elites behavioral
+archive, a multi-signal stagnation detector driving a logged escalation
+ladder, lineage records for every candidate, and `NO_EDGE_FOUND` as a
+first-class, test-proven outcome. No performance claims.
 
 - Forensic audit of the previous (v8) system: [`docs/FORENSIC_AUDIT.md`](docs/FORENSIC_AUDIT.md)
 - Phase plan & acceptance criteria: [`docs/PHASE_PLAN.md`](docs/PHASE_PLAN.md)
@@ -76,6 +76,18 @@ src/evoquant/
   regimes/
     fingerprints.py    slice-local causal pair fingerprints
     router.py          train-only quantile regime router (one-sided)
+  genome/
+    generator.py       type-directed random expression generation
+    genome.py          StrategyGenome — semantic-hash identity
+    mutations.py       type-safe mutation/crossover operators
+  search/
+    objectives.py      constraint vector + Pareto objectives (no scalar)
+    nsga.py            constraint-dominance NSGA-II selection
+    map_elites.py      behavioral quality-diversity archive
+    stagnation.py      multi-signal detector + logged escalation ladder
+    lineage.py         per-candidate lineage records
+    evaluator.py       genome -> compiled signals -> Tier-A fold metrics
+    island.py          the generational loop for one search island
   cli.py
 ```
 

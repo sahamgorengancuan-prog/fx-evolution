@@ -98,3 +98,22 @@ Honest inventory. Anything listed here is *by design not claimed to work*.
 25. **Fingerprint feature set is small** (8 aggregates) and not yet
     validated as a useful context for operator learning — that evidence
     can only come from Phase 6 outcomes.
+
+## Phase 5 (current)
+
+26. **Single island, single regime.** The hierarchical pair×regime island
+    topology, migration, and per-regime policies are not wired yet; the
+    island searches one undifferentiated policy per run.
+27. **Operator probabilities are uniform** — no contextual bandit yet
+    (Phase 6). Search efficiency is accordingly naive.
+28. **No CMA-ES.** The local-refinement rung is jitter-based stochastic
+    hill-climbing on parameters; covariance-adaptive refinement is
+    pending.
+29. **Evaluation is inner-validation-block based**, not full nested WFO
+    model selection — that arrives with Phase 7's CPCV machinery. Outer
+    OOS folds and the lockbox remain untouched by the search.
+30. **Search throughput is tiny** (O(n·p) features + Python-loop engine):
+    the integration suite runs pop 8 × 3 generations in ~10 s. Real
+    experiments need the vectorized kernels flagged in #12/#22 first.
+31. **Surrogate ranking absent** (blueprint allows it only as a compute
+    scheduler anyway).

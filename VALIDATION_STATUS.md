@@ -81,11 +81,31 @@ Legend: ✅ VERIFIED (test evidence) · 🟡 PARTIAL · ⏳ PENDING · ❌ NOT B
 | HMM / change-point routers | ❌ | Not built — KNOWN_LIMITATIONS.md #23 |
 | Calibrated regime probabilities | ❌ | Not built — KNOWN_LIMITATIONS.md #24 |
 
+## Phase 5 — search engine core
+
+| Claim | Status | Evidence |
+|---|---|---|
+| Generated/mutated genomes always compile (property tests, all operators) | ✅ | `tests/unit/test_genome.py` |
+| Semantic duplicates (v8 `abs(abs)` HOF pair) share one genome identity | ✅ | `tests/unit/test_genome.py::test_semantic_duplicates_share_genome_hash` |
+| Feasible always outranks infeasible; infeasible ranked by violation | ✅ | `tests/unit/test_nsga.py` |
+| Non-dominated sort + crowding on planted fronts | ✅ | `tests/unit/test_nsga.py` |
+| PF capped so tiny-sample luck cannot dominate | ✅ | `tests/unit/test_nsga.py::test_pf_cap_prevents_tiny_sample_domination` |
+| MAP-Elites cells replaced only under constraint dominance; coverage grows | ✅ | `tests/unit/test_map_elites.py` |
+| 2D hypervolume hand-computed; ladder fires in order to NO_EDGE_FOUND | ✅ | `tests/unit/test_stagnation.py` |
+| Infeasible diversity churn is not progress (D3/D4 regression) | ✅ | `tests/unit/test_stagnation.py::test_infeasible_diversity_churn_is_not_progress` |
+| Every intervention logged with signals; improvement resets rung | ✅ | `tests/unit/test_stagnation.py` |
+| Mini search on real BNBUSDT is seed-deterministic (champion, lineage, telemetry) | ✅ | `tests/integration/test_phase5_search.py::test_search_is_seed_deterministic` |
+| Every candidate gets a lineage record (hash, parents, operator, objectives) | ✅ | `tests/integration/test_phase5_search.py` |
+| Impossible targets ⇒ NO_EDGE_FOUND; a pass is never forced | ✅ | `tests/integration/test_phase5_search.py::test_impossible_targets_terminate_no_edge_found` |
+| Contextual operator bandit | ❌ | Phase 6 |
+| Pair×regime island hierarchy + migration | ❌ | KNOWN_LIMITATIONS.md #26 |
+| CMA-ES local refinement | ❌ | KNOWN_LIMITATIONS.md #28 |
+| Search-scale performance | ❌ | KNOWN_LIMITATIONS.md #30 |
+
 ## Later phases
 
 | Component | Status |
 |---|---|
-| Search engine (Phase 5) | ❌ NOT BUILT |
 | Memory + LLM agents (Phase 6) | ❌ NOT BUILT (proposal schema validation only) |
 | Statistical validation (Phase 7) | ❌ NOT BUILT |
 | MQL5 export/parity (Phase 8) | ❌ NOT BUILT |
