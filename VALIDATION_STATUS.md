@@ -67,11 +67,24 @@ Legend: ✅ VERIFIED (test evidence) · 🟡 PARTIAL · ⏳ PENDING · ❌ NOT B
 | Margin/liquidation model | ❌ | Not built — KNOWN_LIMITATIONS.md #19 |
 | Strategy profitability | ❌ | Not claimed, by design |
 
+## Phase 4 — pair fingerprints & regime router
+
+| Claim | Status | Evidence |
+|---|---|---|
+| Router params are a pure function of the train slice (D7 leakage probe) | ✅ | `tests/unit/test_regimes.py::TestFitDiscipline::test_params_depend_only_on_train_slice` |
+| Refit on identical train ⇒ bit-identical params | ✅ | `TestFitDiscipline::test_refit_is_bit_identical` |
+| Labels one-sided: prefix invariance + future perturbation | ✅ | `TestOneSidedInference`, real-data variant in `tests/integration/test_phase4_real_data.py` |
+| Warmup labeled UNKNOWN; unfitted router refuses inference | ✅ | `TestOneSidedInference::test_warmup_is_unknown`, `TestFitDiscipline` |
+| Causal min-dwell smoothing (incl. property test on random sequences) | ✅ | `tests/unit/test_regimes.py::TestDwellSmoothing` |
+| Fingerprint deterministic, hashable, slice-local | ✅ | `tests/unit/test_regimes.py::TestFingerprint` |
+| Real-data: fold-train fit, one-sided inference over research view, all regimes reachable | ✅ | `tests/integration/test_phase4_real_data.py` |
+| HMM / change-point routers | ❌ | Not built — KNOWN_LIMITATIONS.md #23 |
+| Calibrated regime probabilities | ❌ | Not built — KNOWN_LIMITATIONS.md #24 |
+
 ## Later phases
 
 | Component | Status |
 |---|---|
-| Regime router (Phase 4) | ❌ NOT BUILT |
 | Search engine (Phase 5) | ❌ NOT BUILT |
 | Memory + LLM agents (Phase 6) | ❌ NOT BUILT (proposal schema validation only) |
 | Statistical validation (Phase 7) | ❌ NOT BUILT |

@@ -123,3 +123,25 @@ have full ADRs in `docs/adr/`.
 28. **Margin/liquidation and partial fills are not modeled** in either
     engine yet (leverage capped at sizing time instead); recorded in
     KNOWN_LIMITATIONS rather than approximated silently.
+
+## 2026-07-10 — Phase 4
+
+29. **Baseline router is rule-based quantile thresholds**, not an HMM.
+    Two causal features (trend efficiency, ATR%) with train-median
+    thresholds give {trend,range}×{high,low vol} + UNKNOWN. Rationale:
+    the leakage discipline (train-only fit, one-sided inference) is the
+    hard part and must be provable first; HMM/change-point routers plug
+    into the same interface later and must pass the same test battery.
+30. **Min-dwell smoothing is a causal challenger/commit automaton**: a
+    switch commits only after `min_dwell` consecutive raw bars of the
+    same new regime; UNKNOWN feature gaps keep the committed regime
+    instead of fabricating switches. The smoother is unit-tested
+    directly, including a property test over random sequences.
+31. **Fingerprints are aggregates over exactly the slice passed in** —
+    the caller (experiment orchestration) is responsible for passing
+    train partitions; tests prove slice-locality by perturbing data
+    outside the slice.
+32. **Regime probabilities deferred.** The baseline router emits hard
+    labels + UNKNOWN; calibrated transition uncertainty arrives with the
+    probabilistic routers (HMM) and will extend, not replace, the label
+    contract.

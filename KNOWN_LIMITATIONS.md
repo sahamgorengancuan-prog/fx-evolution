@@ -84,3 +84,17 @@ Honest inventory. Anything listed here is *by design not claimed to work*.
 22. **Engine throughput is Python-loop bound** (~1M bar-steps/s). Fine
     for validation; the Phase-5 search loop will need batched/vectorized
     evaluation with canonical re-checks on this reference engine.
+
+## Phase 4 (current)
+
+23. **Only the rule-based quantile router exists.** HMM/HSMM and
+    change-point routers are interface stubs in the plan, not code. The
+    quantile router's regime semantics are crude (median splits) — it
+    proves the leakage discipline, not regime-detection quality.
+24. **Hard labels only, no transition probabilities.** Low-confidence
+    handling is limited to UNKNOWN-on-warmup; there is no calibrated
+    uncertainty yet, so "flat when uncertain" currently means "flat
+    during warmup".
+25. **Fingerprint feature set is small** (8 aggregates) and not yet
+    validated as a useful context for operator learning — that evidence
+    can only come from Phase 6 outcomes.

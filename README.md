@@ -5,15 +5,15 @@ A **universal search engine**, not a universal strategy: shared evaluation
 protocol and governance, pair-specific policies, `NO_EDGE_FOUND` as a
 first-class outcome.
 
-**Status: Phase 3** — data governance (Phase 1: manifests, QA, sealed
+**Status: Phase 4** — data governance (Phase 1: manifests, QA, sealed
 nested splits, one-shot lockbox), the dimension-typed causal feature DSL
 (Phase 2: compile-time rejection of dimensionally invalid rules,
-canonicalization, causality/parity-tested evaluators), and two-tier
-backtesting (Phase 3): a mark-to-market, bid/ask-aware, gap-through-stop,
-contract-rounding bar engine permanently labeled `BAR_APPROXIMATION`, a
-tick/event engine with latency and seeded rejection (synthetic-tick
-tested; real-tick PENDING), and a fail-closed cost model in which every
-assumption is explicit and labeled. No search, no performance claims.
+canonicalization, causality/parity-tested evaluators), two-tier
+backtesting (Phase 3: `BAR_APPROXIMATION` bar engine + `TICK_EVENT`
+engine with a fail-closed, fully labeled cost model), and the pair-regime
+layer (Phase 4: slice-local causal fingerprints and a train-only regime
+router with one-sided inference, causal min-dwell smoothing, and a
+first-class UNKNOWN state). No search, no performance claims.
 
 - Forensic audit of the previous (v8) system: [`docs/FORENSIC_AUDIT.md`](docs/FORENSIC_AUDIT.md)
 - Phase plan & acceptance criteria: [`docs/PHASE_PLAN.md`](docs/PHASE_PLAN.md)
@@ -73,6 +73,9 @@ src/evoquant/
     fast_engine.py     Tier A: BAR_APPROXIMATION bar engine
     event_engine.py    Tier B: TICK_EVENT engine (latency, rejection)
     metrics.py         plain metrics from MTM equity + trades
+  regimes/
+    fingerprints.py    slice-local causal pair fingerprints
+    router.py          train-only quantile regime router (one-sided)
   cli.py
 ```
 
