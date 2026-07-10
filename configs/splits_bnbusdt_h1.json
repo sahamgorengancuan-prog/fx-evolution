@@ -1,0 +1,10 @@
+{
+  "n_outer_folds": 6,
+  "outer_test_bars": 2160,
+  "n_inner_folds": 4,
+  "inner_val_bars": 1080,
+  "purge_bars": 96,
+  "embargo_bars": 24,
+  "lockbox_bars": 10800,
+  "min_train_bars": 20000
+}
