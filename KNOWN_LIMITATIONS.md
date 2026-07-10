@@ -61,3 +61,26 @@ Honest inventory. Anything listed here is *by design not claimed to work*.
 16. **Grammar coverage is minimal** (~30 ops). Volume-based indicators
     beyond raw volume, session/TIME features, and multi-timeframe
     references are not yet expressible.
+
+## Phase 3 (current)
+
+17. **Tier A remains a bar approximation** no matter how many boxes it
+    ticks: intrabar path, real spread dynamics, and queue effects are
+    unknowable from OHLC. Its label says so; nothing downstream may drop
+    that label.
+18. **Tier B has never seen real ticks.** It is validated against
+    synthetic tick fixtures only. Latency is a constant, rejection is a
+    Bernoulli coin, partial fills and order-book depth are not modeled.
+    Real-tick validation is PENDING until tick data is supplied.
+19. **No margin/liquidation model.** Leverage is capped at sizing time;
+    a position cannot be liquidated mid-trade. Fine at 1x on spot;
+    unacceptable for leveraged perp research — must be added before any
+    such experiment.
+20. **Funding is all-or-nothing**: either spot (zero) or a constant
+    points-per-day from spec. Real perp funding (8h schedule, variable
+    rate) needs a funding-history source.
+21. **Single position, single instrument.** No portfolio interaction,
+    no exposure netting across pairs (Phase 9 scope).
+22. **Engine throughput is Python-loop bound** (~1M bar-steps/s). Fine
+    for validation; the Phase-5 search loop will need batched/vectorized
+    evaluation with canonical re-checks on this reference engine.

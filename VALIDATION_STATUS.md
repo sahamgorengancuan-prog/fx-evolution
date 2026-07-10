@@ -46,11 +46,31 @@ Legend: ✅ VERIFIED (test evidence) · 🟡 PARTIAL · ⏳ PENDING · ❌ NOT B
 | Proposal sandbox compilation | ❌ | Phase 6 — see KNOWN_LIMITATIONS.md #15 |
 | Search-grade evaluation performance | ❌ | Not claimed — see KNOWN_LIMITATIONS.md #12 |
 
+## Phase 3 — two-tier backtest engines
+
+| Claim | Status | Evidence |
+|---|---|---|
+| Costs fail closed: no spread source / commission / funding decision / min-notional | ✅ | `tests/unit/test_backtest_costs.py`, `tests/integration/test_phase3_real_data.py::test_costs_fail_closed_on_real_spec` |
+| Assumed constant spread is flagged and labeled in every result | ✅ | `tests/unit/test_backtest_costs.py`, integration provenance asserts |
+| Sizing: lot grid, min lot, min notional, leverage cap (hand-computed) | ✅ | `tests/unit/test_backtest_costs.py` |
+| Exact PnL/costs on hand-computed fixture trade | ✅ | `tests/unit/test_fast_engine.py::TestHandComputedTrade` |
+| Mark-to-market equity shows open-position excursion (v8 D9 fix) | ✅ | `tests/unit/test_fast_engine.py::TestMtmExcursion` |
+| Gap-through-stop fills at first executable price, never the stop | ✅ | `tests/unit/test_fast_engine.py::TestGapThroughStop`, `tests/unit/test_event_engine.py::TestGapThroughStopOnTicks` |
+| SL+TP same bar ⇒ SL taken; Tier A never more optimistic than tick path | ✅ | `tests/unit/test_fast_engine.py::TestWorstCaseOrdering`, `tests/unit/test_event_engine.py::TestConservativeInequality` |
+| Signals at bar close execute next bar open (causal) | ✅ | `TestHandComputedTrade` entry-index assert |
+| Funding accrual per bar held (cost-positive convention) | ✅ | `tests/unit/test_fast_engine.py::TestFundingAndDeterminism` |
+| Deterministic trade hash; Tier B seeded rejection reproducible | ✅ | `TestFundingAndDeterminism`, `tests/unit/test_event_engine.py::TestLatencyAndRejection` |
+| Zero-latency Tier B matches Tier A on unambiguous fixtures | ✅ | `tests/unit/test_event_engine.py::TestZeroLatencyParityWithTierA` |
+| Latency shifts fills to later ticks | ✅ | `tests/unit/test_event_engine.py::TestLatencyAndRejection` |
+| Real-data Tier A run: deterministic, labeled, contract mechanics hold | ✅ | `tests/integration/test_phase3_real_data.py` |
+| Tier B against real tick history | ⏳ PENDING | no tick data attached — see KNOWN_LIMITATIONS.md #18 |
+| Margin/liquidation model | ❌ | Not built — KNOWN_LIMITATIONS.md #19 |
+| Strategy profitability | ❌ | Not claimed, by design |
+
 ## Later phases
 
 | Component | Status |
 |---|---|
-| Backtest engines (Phase 3) | ❌ NOT BUILT |
 | Regime router (Phase 4) | ❌ NOT BUILT |
 | Search engine (Phase 5) | ❌ NOT BUILT |
 | Memory + LLM agents (Phase 6) | ❌ NOT BUILT (proposal schema validation only) |

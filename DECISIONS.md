@@ -91,3 +91,35 @@ have full ADRs in `docs/adr/`.
     `IndicatorProposal` validation (fail closed, no random fallback);
     whitelisted compilation and sandboxing are Phase 6. Until then no LLM
     proposal can enter the grammar at all.
+
+## 2026-07-10 — Phase 3
+
+21. **Engines execute precomputed signal arrays, not strategy callbacks.**
+    `SignalPolicy` carries per-bar causal boolean arrays produced by the
+    Phase-2 compiler (whose causality is test-enforced) plus a risk block.
+    No user code runs inside the engine loop — determinism and Tier-A/B
+    identical semantics come for free.
+22. **Timing convention:** signal on bar `i` (close) executes at bar `i+1`
+    open (Tier A) / first tick after bar-`i` completion + latency
+    (Tier B). Same-bar execution is impossible by construction.
+23. **Source prices treated as mid**; spread applied symmetrically (±half
+    spread). The spread series itself must come from `resolve_costs` —
+    trusted history or an explicitly labeled assumption; the label travels
+    into every result artifact.
+24. **All execution costs are experimenter-stated**: commission as
+    fraction of notional, funding mode (`not_applicable_spot` or
+    points-per-day from spec, cost-positive convention), min-notional,
+    slippage, leverage cap. Missing any ⇒ `MissingMetadataError`. The FSB
+    header's ambiguous `commissionType=5` is deliberately NOT interpreted.
+25. **Conservative intrabar rule:** SL dominates TP when both are touched
+    in one Tier-A bar; gaps fill at the first executable price (bar open /
+    first tick beyond the level). Differential test asserts Tier A is
+    never more optimistic than the tick path.
+26. **Conflicting simultaneous long+short signals ⇒ no trade** (logged);
+    one position at a time; cooldown measured in bars from exit.
+27. **Tier B is tested with synthetic ticks only** (unit fixtures, O→H→L→C
+    path). No real tick data is attached; real-tick validation is PENDING
+    and the engine's README/docstring says so.
+28. **Margin/liquidation and partial fills are not modeled** in either
+    engine yet (leverage capped at sizing time instead); recorded in
+    KNOWN_LIMITATIONS rather than approximated silently.

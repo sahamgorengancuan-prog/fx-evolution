@@ -5,13 +5,15 @@ A **universal search engine**, not a universal strategy: shared evaluation
 protocol and governance, pair-specific policies, `NO_EDGE_FOUND` as a
 first-class outcome.
 
-**Status: Phase 2** — Phase 1 (data contracts, immutable manifests,
-quality gates, nested walk-forward splits with purge/embargo, experiment
-state machine, one-shot final lockbox) plus the dimension-typed causal
-feature DSL: a compiler that rejects dimensionally invalid rules at
-compile time, AST canonicalization/semantic-duplicate hashing, and
-batch/incremental evaluators with causality and parity test coverage.
-No search, no backtesting, no performance claims.
+**Status: Phase 3** — data governance (Phase 1: manifests, QA, sealed
+nested splits, one-shot lockbox), the dimension-typed causal feature DSL
+(Phase 2: compile-time rejection of dimensionally invalid rules,
+canonicalization, causality/parity-tested evaluators), and two-tier
+backtesting (Phase 3): a mark-to-market, bid/ask-aware, gap-through-stop,
+contract-rounding bar engine permanently labeled `BAR_APPROXIMATION`, a
+tick/event engine with latency and seeded rejection (synthetic-tick
+tested; real-tick PENDING), and a fail-closed cost model in which every
+assumption is explicit and labeled. No search, no performance claims.
 
 - Forensic audit of the previous (v8) system: [`docs/FORENSIC_AUDIT.md`](docs/FORENSIC_AUDIT.md)
 - Phase plan & acceptance criteria: [`docs/PHASE_PLAN.md`](docs/PHASE_PLAN.md)
@@ -65,6 +67,12 @@ src/evoquant/
     compiler.py        type checking, lookback/complexity, evaluators
     simplifier.py      simplification, canonicalization, semantic hashing
     proposals.py       LLM indicator-proposal schema (validation only)
+  backtest/
+    costs.py           fail-closed cost resolution + risk-based sizing
+    signals.py         SignalPolicy — the executable strategy contract
+    fast_engine.py     Tier A: BAR_APPROXIMATION bar engine
+    event_engine.py    Tier B: TICK_EVENT engine (latency, rejection)
+    metrics.py         plain metrics from MTM equity + trades
   cli.py
 ```
 

@@ -101,10 +101,15 @@ class InstrumentSpec:
         return self.spread_source in TRUSTED_SPREAD_SOURCES
 
     def round_lot(self, lots: float) -> float:
-        """Round a raw lot amount down to the venue lot grid; 0.0 if below min."""
+        """Round a raw lot amount down to the venue lot grid; 0.0 if below min.
+
+        The 1e-9 epsilon absorbs float division error (0.49/0.01 -> 48.999...)
+        so exact grid multiples are never rounded a step too low.
+        """
         if lots < self.min_lot:
             return 0.0
-        stepped = self.min_lot + int((lots - self.min_lot) / self.lot_step) * self.lot_step
+        steps = int((lots - self.min_lot) / self.lot_step + 1e-9)
+        stepped = self.min_lot + steps * self.lot_step
         return min(round(stepped, 12), self.max_lot)
 
     def to_dict(self) -> dict[str, Any]:
