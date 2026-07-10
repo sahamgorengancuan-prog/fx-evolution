@@ -116,11 +116,33 @@ trade level. Real-terminal execution marked PENDING where no terminal.
 signals bit-for-bar; parity report itemizes every discrepancy; missing
 terminal ⇒ artifact bundle + exact manual command, never fake success.
 
-## Phase 9 — Full experiment & model card
+## Phase 9 — Full experiment, model card & Cloudflare control plane
 
 **Objective.** One-pair (BNBUSDT) end-to-end: manifest → seal → search →
 shortlist → tick validation → (MQL5 parity) → freeze → lockbox once →
 model card or rejection report. Generalize to more pairs only after pass.
+
+**Plus (user requirement, 2026-07-10): a Cloudflare Workers dashboard.**
+Architecture decision: Workers cannot run the numpy search (CPU-time
+limits), so the Worker is the **control plane** and the Python engine
+remains the **compute plane**:
+- single Worker (no build step) serving an embedded HTML/JS UI;
+- KV-backed settings: pair list, split/target/search configs, provider
+  choice; secrets (`wrangler secret`) for API keys — env-var save;
+- "Test connection" endpoint proxying OpenAI / OpenRouter chat
+  completions with the stored key (mirrors `evoquant.llm.client`);
+- run registry: the Python runner authenticates with a runner token,
+  posts heartbeats/telemetry, uploads result JSON artifacts;
+- results browser: list runs, live-poll telemetry, view verdicts,
+  download artifacts;
+- the Worker never computes fitness and never stores lockbox data —
+  the same governance rules apply to the dashboard.
+
 **Acceptance.** Experiment replay from manifest reproduces decisions;
 lockbox event log shows exactly one open; model card includes negative
 evidence; `REJECTED`/`NO_EDGE_FOUND` produce complete reports too.
+Dashboard: config round-trips through KV; key test returns provider
+latency/model or a structured error; a runner-published result is
+listable, viewable, and downloadable byte-identical; deployed-Worker
+end-to-end marked with exact `wrangler deploy` commands (real-account
+execution PENDING where no Cloudflare credentials exist in CI).

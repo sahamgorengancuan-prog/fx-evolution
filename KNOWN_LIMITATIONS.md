@@ -117,3 +117,21 @@ Honest inventory. Anything listed here is *by design not claimed to work*.
     experiments need the vectorized kernels flagged in #12/#22 first.
 31. **Surrogate ranking absent** (blueprint allows it only as a compute
     scheduler anyway).
+
+## Phase 6 (current)
+
+32. **No agent orchestration yet.** Contracts, client, retrieval, and
+    guards exist and are tested; the loop that actually calls a live LLM
+    during stagnation (rung 7 of the blueprint ladder) is not wired, and
+    no live API call has ever been made from this repo.
+33. **Proposal sandbox still absent** — a schema-valid `IndicatorProposal`
+    from an LLM still cannot enter the grammar (fail closed); whitelisted
+    compilation + causality/parity testing of proposals remains open.
+34. **The lockbox-content guard matches key names**, not values. A leak
+    laundered through renamed keys would pass; the guard is a tripwire,
+    not cryptographic isolation (see #1).
+35. **Bandit context buckets are fixed constants** (2×2 fingerprint grid ×
+    regime). Whether they carry signal is an empirical question Phase 9's
+    experiment must answer; posteriors are replayable either way.
+36. **Lesson confidence is caller-asserted.** No calibration mechanism
+    yet; treat it as an ordering heuristic, not a probability.

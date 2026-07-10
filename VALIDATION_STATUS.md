@@ -102,11 +102,28 @@ Legend: ✅ VERIFIED (test evidence) · 🟡 PARTIAL · ⏳ PENDING · ❌ NOT B
 | CMA-ES local refinement | ❌ | KNOWN_LIMITATIONS.md #28 |
 | Search-scale performance | ❌ | KNOWN_LIMITATIONS.md #30 |
 
+## Phase 6 — evolutionary memory & LLM agent contracts
+
+| Claim | Status | Evidence |
+|---|---|---|
+| Event store is append-only (no mutator API), persists across reopen | ✅ | `tests/unit/test_memory_store.py` |
+| Schema-version mismatch fails closed | ✅ | `tests/unit/test_memory_store.py::TestStore::test_schema_version_mismatch_fails_closed` |
+| Replay reconstructs per-(context, operator) outcomes exactly | ✅ | `test_memory_store.py`, `test_island_memory_integration.py::test_bandit_replay_reconstructs_selector` |
+| Failure labels deterministic, blueprint taxonomy subset | ✅ | `tests/unit/test_memory_store.py::TestFailureLabels` |
+| Bandit seed-deterministic; learns planted better operator; contexts independent | ✅ | `tests/unit/test_bandit.py` |
+| Lessons: supersede retires, replay reproduces, retrieval ranked+bounded | ✅ | `tests/unit/test_lessons.py` |
+| Retrieval context bounded and lockbox-guard clean | ✅ | `tests/unit/test_llm_contracts.py::TestRetrievalIntegration` |
+| Lockbox-scoped keys at any depth raise before reaching an LLM | ✅ | `tests/unit/test_llm_contracts.py::TestLockboxGuard` |
+| LLM fitness-authority attempts rejected (no fallback) | ✅ | `tests/unit/test_llm_contracts.py::TestResponseParsing` |
+| Client fails closed on missing env; redacted keys only; fake-transport round-trip | ✅ | `tests/unit/test_llm_client.py` |
+| Island+bandit+store integration deterministic; escalation pool outranks bandit | ✅ | `tests/unit/test_island_memory_integration.py` |
+| Live LLM call (OpenAI/OpenRouter) | ⏳ PENDING | never executed from this repo; exercised via dashboard in Phase 9 |
+| Proposal sandbox compilation | ❌ | KNOWN_LIMITATIONS.md #33 |
+
 ## Later phases
 
 | Component | Status |
 |---|---|
-| Memory + LLM agents (Phase 6) | ❌ NOT BUILT (proposal schema validation only) |
 | Statistical validation (Phase 7) | ❌ NOT BUILT |
 | MQL5 export/parity (Phase 8) | ❌ NOT BUILT |
 

@@ -6,20 +6,25 @@ local parameter refinement gated on structural stability, the stagnation
 controller's escalation ladder, and lineage recording for every evaluated
 candidate. Deterministic under its seed.
 
-Deliberately absent until Phase 6: the contextual operator bandit
-(operators are drawn uniformly here — the hook is the `operator` field on
-every lineage record) and the persistent event store.
+Phase-6 integrations (both optional, injected): a contextual
+Thompson-sampling operator selector (uniform draw when absent) and the
+event-sourced MemoryStore, which receives a `candidate_evaluated` event —
+context, operator, reward, failure labels — for every evaluation.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
 from evoquant.genome.genome import StrategyGenome, random_genome
 from evoquant.genome.mutations import OPERATOR_NAMES, crossover, mutate
 from evoquant.search.evaluator import EvalContext, evaluate_genome
+
+if TYPE_CHECKING:  # avoid an import cycle at runtime
+    from evoquant.memory.bandit import ThompsonOperatorSelector
+    from evoquant.memory.store import MemoryStore
 from evoquant.search.lineage import LineageRecord, LineageStore
 from evoquant.search.map_elites import MapElitesArchive
 from evoquant.search.nsga import rank_population
@@ -59,7 +64,16 @@ class IslandState:
 
 
 class SearchIsland:
-    def __init__(self, config: IslandConfig, ctx: EvalContext, targets: TargetConfig) -> None:
+    def __init__(
+        self,
+        config: IslandConfig,
+        ctx: EvalContext,
+        targets: TargetConfig,
+        *,
+        operator_selector: ThompsonOperatorSelector | None = None,
+        memory: MemoryStore | None = None,
+        context_key: str = "anyfp|all",
+    ) -> None:
         self.config = config
         self.ctx = ctx
         self.targets = targets
@@ -68,11 +82,16 @@ class SearchIsland:
         self.archive = MapElitesArchive(targets=targets)
         self.stagnation = StagnationController(patience=config.stagnation_patience)
         self.state = IslandState()
+        self.selector = operator_selector
+        self.memory = memory
+        self.context_key = context_key
         self._eval_cache: dict[str, CandidateEvaluation] = {}
 
     # ------------------------------------------------------------------ #
 
-    def _evaluate(self, genome: StrategyGenome, operator: str | None) -> CandidateEvaluation:
+    def _evaluate(
+        self, genome: StrategyGenome, operator: str | None
+    ) -> tuple[CandidateEvaluation, bool]:
         h = genome.genome_hash()
         ev = self._eval_cache.get(h)
         if ev is None:
@@ -91,15 +110,73 @@ class SearchIsland:
                 diagnostics=dict(ev.diagnostics),
             )
         )
-        self.archive.try_insert(ev)
-        return ev
+        accepted = self.archive.try_insert(ev)
+        return ev, accepted
+
+    def _reward(
+        self,
+        parent_ev: CandidateEvaluation | None,
+        child_ev: CandidateEvaluation,
+        archive_accepted: bool,
+    ) -> bool:
+        """Operator reward: movement toward feasibility, a Pareto win over
+        the parent, or a MAP-Elites cell win — never a raw scalar."""
+        if parent_ev is None:
+            return archive_accepted
+        child_feas = child_ev.is_feasible(self.targets)
+        parent_feas = parent_ev.is_feasible(self.targets)
+        if child_feas and not parent_feas:
+            return True
+        if not child_feas and not parent_feas:
+            improved = child_ev.total_violation(self.targets) < parent_ev.total_violation(
+                self.targets
+            ) * (1.0 - 1e-6)
+            return improved or archive_accepted
+        from evoquant.search.nsga import pareto_dominates
+
+        return archive_accepted or bool(
+            pareto_dominates(child_ev.objectives(), parent_ev.objectives())
+        )
+
+    def _record_event(
+        self,
+        genome: StrategyGenome,
+        ev: CandidateEvaluation,
+        operator: str | None,
+        reward: bool | None,
+    ) -> None:
+        if self.memory is None:
+            return
+        from evoquant.memory.failures import failure_labels
+
+        self.memory.append(
+            "candidate_evaluated",
+            {
+                "genome_hash": genome.genome_hash(),
+                "parent_hashes": list(genome.parent_hashes),
+                "origin": genome.origin,
+                "operator": operator,
+                "context": self.context_key,
+                "generation": self.state.generation,
+                "feasible": ev.is_feasible(self.targets),
+                "total_violation": ev.total_violation(self.targets),
+                "objectives": [float(x) for x in ev.objectives()],
+                "failure_labels": failure_labels(ev, self.targets),
+                "reward": bool(reward) if reward is not None else None,
+                "diagnostics": dict(ev.diagnostics),
+            },
+        )
 
     def _init_population(self) -> None:
         self.state.population = [
             random_genome(self.rng, self.config.symbol, generation=0)
             for _ in range(self.config.population_size)
         ]
-        self.state.evaluations = [self._evaluate(g, None) for g in self.state.population]
+        self.state.evaluations = []
+        for g in self.state.population:
+            ev, _ = self._evaluate(g, None)
+            self._record_event(g, ev, None, None)
+            self.state.evaluations.append(ev)
 
     def _signals(self) -> GenerationSignals:
         evals = self.state.evaluations
@@ -141,7 +218,9 @@ class SearchIsland:
                 for _ in range(self.config.population_size - len(survivors))
             ]
             self.state.population = (survivors + fresh)[: self.config.population_size]
-            self.state.evaluations = [self._evaluate(g, None) for g in self.state.population]
+            self.state.evaluations = [
+                self._evaluate(g, None)[0] for g in self.state.population
+            ]
         elif intervention is Intervention.NO_EDGE_FOUND:
             self.state.outcome = "NO_EDGE_FOUND"
 
@@ -150,33 +229,56 @@ class SearchIsland:
         gen = self.state.generation
         ranked = rank_population(self.state.evaluations, self.targets)
         elite_count = max(2, cfg.population_size // 4)
-        elites = [self.state.population[r.index] for r in ranked[:elite_count]]
+        elite_pairs = [
+            (self.state.population[r.index], self.state.evaluations[r.index])
+            for r in ranked[:elite_count]
+        ]
+        elites = [g for g, _ in elite_pairs]
 
         n_random = int(round(cfg.population_size * cfg.random_fraction))
         n_cross = int(round(cfg.population_size * cfg.crossover_fraction))
         n_mutants = cfg.population_size - len(elites) - n_random - n_cross
 
-        children: list[tuple[StrategyGenome, str | None]] = [(g, None) for g in elites]
-        pool = self._operator_pool()
+        forced = self.state.forced_ops is not None
+        pool = self._operator_pool()  # note: consumes forced_ops
+        children: list[tuple[StrategyGenome, str | None, CandidateEvaluation | None]] = [
+            (g, None, ev) for g, ev in elite_pairs
+        ]
         for _ in range(max(n_mutants, 0)):
-            parent = elites[int(self.rng.integers(len(elites)))]
-            op = str(self.rng.choice(pool))
+            idx = int(self.rng.integers(len(elites)))
+            parent, parent_ev = elite_pairs[idx]
+            if self.selector is not None and not forced:
+                op = self.selector.select(self.context_key)
+                if op not in pool:
+                    op = str(self.rng.choice(pool))
+            else:
+                op = str(self.rng.choice(pool))
             child, applied = mutate(parent, op, self.rng, gen)
-            children.append((child, op if applied else None))
+            children.append((child, op if applied else None, parent_ev))
         for _ in range(n_cross):
             a = elites[int(self.rng.integers(len(elites)))]
             b = elites[int(self.rng.integers(len(elites)))]
             child, applied = crossover(a, b, self.rng, gen)
-            children.append((child, "crossover" if applied else None))
+            children.append((child, "crossover" if applied else None, None))
         while len(children) < cfg.population_size:
             children.append(
-                (random_genome(self.rng, cfg.symbol, generation=gen), None)
+                (random_genome(self.rng, cfg.symbol, generation=gen), None, None)
             )
 
-        self.state.population = [c[0] for c in children[: cfg.population_size]]
-        self.state.evaluations = [
-            self._evaluate(g, op) for g, op in children[: cfg.population_size]
-        ]
+        population: list[StrategyGenome] = []
+        evaluations: list[CandidateEvaluation] = []
+        for genome, child_op, child_parent_ev in children[: cfg.population_size]:
+            ev, accepted = self._evaluate(genome, child_op)
+            reward: bool | None = None
+            if child_op is not None and child_op != "crossover":
+                reward = self._reward(child_parent_ev, ev, accepted)
+                if self.selector is not None:
+                    self.selector.update(self.context_key, child_op, reward)
+            self._record_event(genome, ev, child_op, reward)
+            population.append(genome)
+            evaluations.append(ev)
+        self.state.population = population
+        self.state.evaluations = evaluations
 
     # ------------------------------------------------------------------ #
 

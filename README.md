@@ -5,15 +5,15 @@ A **universal search engine**, not a universal strategy: shared evaluation
 protocol and governance, pair-specific policies, `NO_EDGE_FOUND` as a
 first-class outcome.
 
-**Status: Phase 5** — data governance (Phase 1: manifests, QA, sealed
-nested splits, one-shot lockbox), the dimension-typed causal feature DSL
-(Phase 2), two-tier backtesting with a fail-closed labeled cost model
-(Phase 3), the train-only pair-regime layer (Phase 4), and the search
-engine core (Phase 5): type-directed genome generation and mutation,
-constraint-dominance NSGA-II (never scalarized), a MAP-Elites behavioral
-archive, a multi-signal stagnation detector driving a logged escalation
-ladder, lineage records for every candidate, and `NO_EDGE_FOUND` as a
-first-class, test-proven outcome. No performance claims.
+**Status: Phase 6** — sealed data governance (P1), dimension-typed
+causal DSL (P2), two-tier backtesting with fail-closed labeled costs
+(P3), train-only pair-regime layer (P4), constraint-dominance search core
+with a logged escalation ladder and first-class `NO_EDGE_FOUND` (P5), and
+the evolutionary memory + LLM layer (P6): an append-only event store,
+semantic lessons, a contextual Thompson-sampling operator bandit wired
+into the island, and strict OpenAI/OpenRouter agent contracts — no
+fitness authority, no lockbox visibility, keys via env vars only.
+No performance claims.
 
 - Forensic audit of the previous (v8) system: [`docs/FORENSIC_AUDIT.md`](docs/FORENSIC_AUDIT.md)
 - Phase plan & acceptance criteria: [`docs/PHASE_PLAN.md`](docs/PHASE_PLAN.md)
@@ -88,6 +88,15 @@ src/evoquant/
     lineage.py         per-candidate lineage records
     evaluator.py       genome -> compiled signals -> Tier-A fold metrics
     island.py          the generational loop for one search island
+  memory/
+    store.py           append-only SQLite event store (versioned schema)
+    failures.py        deterministic failure-label attribution
+    bandit.py          contextual Thompson sampling over operators
+    lessons.py         semantic lesson store (supersede, replay)
+    retrieval.py       bounded LLM context building (lockbox-guarded)
+  llm/
+    contracts.py       strict agent JSON contracts + lockbox-leak guard
+    client.py          OpenAI/OpenRouter chat client (env keys, fail closed)
   cli.py
 ```
 

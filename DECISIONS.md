@@ -172,3 +172,34 @@ have full ADRs in `docs/adr/`.
 39. **LOCAL_REFINEMENT rung = jitter-only generation** (parameters of
     stable structures). Full CMA-ES covariance adaptation is deferred and
     listed in KNOWN_LIMITATIONS.
+
+## 2026-07-10 — Phase 6
+
+40. **SQLite over DuckDB** for the event store: stdlib, zero new
+    dependencies, append-only by API design (no update/delete methods —
+    asserted by a test), versioned via a schema_version row that fails
+    closed on mismatch.
+41. **Bandit reward is categorical, not scalar**: feasibility flip,
+    relative violation reduction, Pareto win over the parent, or a
+    MAP-Elites cell win. Crossover/random/elite events carry
+    `reward=None` and are excluded from operator outcomes.
+42. **Escalation ladder outranks the bandit**: a forced operator pool
+    from a stagnation rung bypasses learned preferences for that
+    generation (tested).
+43. **Lockbox guard for LLM payloads is key-based**
+    (`lockbox|holdout|sealed_test|final_test` substrings at any depth).
+    It is a tripwire against accidental leaks by compliant code, not a
+    semantic censor — consistent with KNOWN_LIMITATIONS #1.
+44. **LLM response schema has no fitness channel** and any attempt to
+    smuggle one (`fitness`/`score`/`rank`/`gate_override`/`feasible`
+    keys) rejects the entire response; unknown mutation operators
+    likewise. No repair, no random fallback.
+45. **LLM client keys live in env vars only** (`OPENAI_API_KEY` /
+    `OPENROUTER_API_KEY`), are never persisted or logged, and only the
+    `redacted()` form may enter artifacts. Transport is injectable; unit
+    tests never touch the network.
+46. **Cloudflare requirement recorded for Phase 9** (user, 2026-07-10):
+    Workers dashboard = control plane (config/KV, key testing, run
+    monitoring, results download); Python engine = compute plane. A
+    Worker cannot and must not run the search or compute fitness; it
+    also never stores lockbox data. Details in docs/PHASE_PLAN.md §9.
