@@ -230,3 +230,27 @@ have full ADRs in `docs/adr/`.
 53. **White's Reality Check over SPA** for Phase 7: simpler, standard,
     sufficient for the one-pair experiment; Hansen's SPA is a listed
     upgrade, not a silent absence.
+
+## 2026-07-10 — Phase 8
+
+54. **Expression transpilation by semantic hash**: every unique canonical
+    subtree becomes exactly one MQL5 function named
+    `Expr_<hash12>` — identical subtrees share code and the same genome
+    always produces byte-identical `.mq5` source (tested).
+55. **The EA re-implements the shared window formulas** (WinMean/WinRank/
+    WinZScore/… mirror `features.primitives`) rather than calling MT5
+    built-in indicators, so semantics match the Python reference by
+    construction instead of by hope. EMA seeds `10 × period` bars back —
+    a documented convergence approximation; parity comparison skips the
+    declared warmup region.
+56. **Model=4 ("Every tick based on real ticks") is pinned in the tester
+    config generator** — no other model may be labeled tick validation.
+57. **Parity is a three-state machine**: PENDING_REAL_TICK (no tester
+    CSVs yet — the honest default), PASS (zero discrepancies), FAIL
+    (itemized). Missing artifacts can never yield PASS; the comparator
+    itself is proven against simulated EA output with injected
+    divergences.
+58. **The `mql5-parity` CLI compares CSV-to-CSV** (bundle expectation
+    dumps vs tester dumps) so the manual loop needs no Python object
+    reconstruction, and it persists `parity_report.json` + flips
+    `parity_status.json` in the bundle.

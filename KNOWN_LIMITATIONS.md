@@ -153,3 +153,21 @@ Honest inventory. Anything listed here is *by design not claimed to work*.
     strategy's own SR) understates cross-trial dispersion when the
     battery is heterogeneous; pass the battery's actual SR variance when
     available.
+
+## Phase 8 (current)
+
+42. **The generated MQL5 has never been compiled or executed** — no
+    MetaTrader terminal exists in this environment. Structural tests
+    cover determinism, grammar coverage, and metadata embedding; real
+    compilation + tester runs are the manual step in RUN_INSTRUCTIONS.md
+    and parity stays PENDING_REAL_TICK until then.
+43. **EA order management is simpler than Tier A in two knowable ways**:
+    equity for sizing is read at fill time (not prior bar close), and
+    the tester's own tick path resolves SL/TP ordering. Both are
+    expected, bounded divergences the parity report will surface —
+    tolerances are explicit parameters, not silent fudge.
+44. **The tester report itself (HTML) is not parsed** — parity uses the
+    EA's own CSV dumps. Deal-level reconciliation against the tester's
+    native report is a future cross-check.
+45. **Custom-symbol creation and tick import are documented, not
+    automated** (MT5 offers no portable CLI for it).

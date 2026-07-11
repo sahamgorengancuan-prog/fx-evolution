@@ -140,11 +140,29 @@ Legend: ✅ VERIFIED (test evidence) · 🟡 PARTIAL · ⏳ PENDING · ❌ NOT B
 | Hansen SPA | ❌ | KNOWN_LIMITATIONS.md #37 |
 | CPCV evaluation harness over real candidate batteries | ⏳ | Phase 9 orchestration |
 
+## Phase 8 — MQL5 export & differential parity
+
+| Claim | Status | Evidence |
+|---|---|---|
+| Export deterministic (same genome ⇒ byte-identical source) | ✅ | `tests/unit/test_mql5_exporter.py::test_export_is_deterministic` |
+| 20 random genomes export; unknown ops raise | ✅ | `test_mql5_exporter.py` |
+| Full grammar coverage vs registry | ✅ | `test_mql5_exporter.py::test_grammar_coverage_matches_generator` |
+| Genome/risk/contract metadata embedded; MIN_BARS covers lookback | ✅ | `test_mql5_exporter.py` |
+| Shared subtrees compile once (semantic-hash naming) | ✅ | `test_mql5_exporter.py::test_subexpressions_are_shared` |
+| Tester config pins Model=4 (Every tick based on real ticks) | ✅ | `test_mql5_exporter.py::TestTesterConfig` |
+| CSV contracts round-trip | ✅ | `tests/unit/test_mql5_parity.py::TestCsvRoundTrip` |
+| Identical EA output ⇒ PASS, zero discrepancies | ✅ | `TestParityComparator` |
+| Flipped signal / price / lots / exit-reason / count divergences itemized | ✅ | `TestParityComparator` |
+| Missing tester artifacts ⇒ PENDING_REAL_TICK, never PASS | ✅ | `TestParityComparator`, `TestBundle` |
+| Bundle carries EA, tester.ini, instructions, expectation dumps, status | ✅ | `TestBundle` |
+| `mql5-parity` CLI: PASS→exit 0, FAIL→exit 1, report persisted | ✅ | `TestParityCli` |
+| EA compiled and run in a real Strategy Tester | ⏳ PENDING_REAL_TICK | no terminal in this environment — RUN_INSTRUCTIONS.md |
+| Python↔EA live parity on real ticks | ⏳ PENDING_REAL_TICK | blocked on the above |
+
 ## Later phases
 
 | Component | Status |
 |---|---|
-| MQL5 export/parity (Phase 8) | ❌ NOT BUILT |
 
 No performance claim of any kind is validated. The v8 artifacts' metrics
 are documented as invalid in `docs/FORENSIC_AUDIT.md`.

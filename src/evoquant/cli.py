@@ -86,6 +86,16 @@ def _cmd_experiment_create(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_mql5_parity(args: argparse.Namespace) -> int:
+    from evoquant.mql5.parity import parity_from_bundle
+
+    report = parity_from_bundle(
+        args.bundle, args.signals, args.trades, price_atol=args.price_atol
+    )
+    print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
+    return 0 if report.status == "PASS" else 1
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="evoquant")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -106,6 +116,15 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--seed", type=int, default=20260710)
     p.add_argument("--name", default="")
     p.set_defaults(func=_cmd_experiment_create)
+
+    p = sub.add_parser(
+        "mql5-parity", help="Diff real Strategy Tester CSVs against a bundle"
+    )
+    p.add_argument("--bundle", required=True)
+    p.add_argument("--signals", required=True, help="EA evoquant_signals.csv")
+    p.add_argument("--trades", required=True, help="EA evoquant_trades.csv")
+    p.add_argument("--price-atol", type=float, default=1e-6)
+    p.set_defaults(func=_cmd_mql5_parity)
 
     args = parser.parse_args(argv)
     try:

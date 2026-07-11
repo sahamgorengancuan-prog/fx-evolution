@@ -5,7 +5,7 @@ A **universal search engine**, not a universal strategy: shared evaluation
 protocol and governance, pair-specific policies, `NO_EDGE_FOUND` as a
 first-class outcome.
 
-**Status: Phase 7** — sealed data governance (P1), dimension-typed
+**Status: Phase 8** — sealed data governance (P1), dimension-typed
 causal DSL (P2), two-tier backtesting with fail-closed labeled costs
 (P3), train-only pair-regime layer (P4), constraint-dominance search core
 with a logged escalation ladder and first-class `NO_EDGE_FOUND` (P5), and
@@ -13,8 +13,11 @@ the evolutionary memory + LLM layer (P6), and the statistical
 validation framework (P7): CPCV, candidate-matrix PBO (CSCV),
 probabilistic/deflated Sharpe with EFFECTIVE trial counts, block
 bootstrap, White's Reality Check, cost/parameter/start stress, return
-concentration — and the order-invariant terminal-return permutation
-"test" is absent by construction. No performance claims.
+concentration (the order-invariant terminal-return permutation "test"
+is absent by construction) — plus MQL5 export (P8): deterministic EA
+transpilation mirroring Tier-A semantics, real-tick tester configs, CSV
+parity contracts and a three-state differential comparator whose default
+is PENDING_REAL_TICK, never assumed success. No performance claims.
 
 - Forensic audit of the previous (v8) system: [`docs/FORENSIC_AUDIT.md`](docs/FORENSIC_AUDIT.md)
 - Phase plan & acceptance criteria: [`docs/PHASE_PLAN.md`](docs/PHASE_PLAN.md)
@@ -105,6 +108,11 @@ src/evoquant/
     bootstrap.py       block bootstrap CIs, DD distribution, Reality Check
     stress.py          cost / parameter / start-offset stress harnesses
     concentration.py   return-concentration diagnostics
+  mql5/
+    exporter.py        genome -> deterministic MQL5 EA + tester.ini
+    parser.py          EA signal/trade CSV contracts
+    parity.py          differential comparator (PENDING/PASS/FAIL)
+    bundle.py          export bundle with manual run instructions
   cli.py
 ```
 
