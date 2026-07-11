@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evoquant — universal evolution searcher</title>
+<style>
+/* self-contained: no CDN, no external fonts/images — runs fully offline */
+:root{
+  --surface-0:#111110; --surface-1:#1a1a19; --surface-2:#232322;
+  --border:#33332f; --text-primary:#ffffff; --text-secondary:#c3c2b7;
+  --text-muted:#8a897f;
+  --series-1:#3987e5; /* hypervolume  (validated dark slot 1) */
+  --series-2:#199e70; /* feasibility  (validated dark slot 2) */
+  --good:#199e70; --warn:#c98500; --bad:#e66767;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--surface-0);color:var(--text-primary);
+  font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:20px}
+h1{font-size:19px;letter-spacing:.3px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.8px;
+  color:var(--text-muted);margin-bottom:12px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:16px}
+header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+header .sub{color:var(--text-muted);font-size:12px}
+.disclaimer{font-size:11.5px;color:var(--text-muted);border:1px solid var(--border);
+  border-left:3px solid var(--warn);border-radius:6px;padding:8px 12px;background:var(--surface-1)}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+.card{background:var(--surface-1);border:1px solid var(--border);border-radius:10px;padding:16px}
+label{display:block;font-size:11.5px;color:var(--text-secondary);margin:10px 0 4px}
+input,select{width:100%;background:var(--surface-2);border:1px solid var(--border);
+  color:var(--text-primary);border-radius:6px;padding:7px 9px;font:inherit}
+input:focus,select:focus{outline:1px solid var(--series-1)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+button{background:var(--surface-2);color:var(--text-primary);border:1px solid var(--border);
+  border-radius:7px;padding:8px 14px;font:inherit;cursor:pointer;margin-top:12px}
+button:hover{border-color:var(--text-muted)}
+button.primary{background:var(--series-1);border-color:var(--series-1);color:#fff;font-weight:600}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+.pairs{display:grid;gap:8px}
+.pair{display:flex;justify-content:space-between;align-items:center;gap:10px;
+  border:1px solid var(--border);border-radius:8px;padding:9px 12px;cursor:pointer;
+  background:var(--surface-2)}
+.pair.selected{border-color:var(--series-1);box-shadow:0 0 0 1px var(--series-1)}
+.pair .sym{font-weight:650}
+.pair .meta{color:var(--text-muted);font-size:11.5px;font-family:var(--mono)}
+.badge{display:inline-block;font-size:11px;font-weight:650;border-radius:99px;
+  padding:2px 10px;border:1px solid var(--border);color:var(--text-secondary)}
+.badge.RUNNING{color:var(--series-1);border-color:var(--series-1)}
+.badge.FINISHED,.badge.SHORTLISTED{color:var(--good);border-color:var(--good)}
+.badge.ERROR,.badge.REJECTED{color:var(--bad);border-color:var(--bad)}
+.badge.NO_EDGE_FOUND{color:var(--warn);border-color:var(--warn)}
+.runs{display:grid;gap:8px}
+.run{border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;
+  background:var(--surface-2);display:flex;justify-content:space-between;gap:10px;align-items:center}
+.run.selected{border-color:var(--series-1)}
+.run .id{font-family:var(--mono);font-size:12px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:12.5px}
+.kv dt{color:var(--text-muted)}
+.kv dd{font-family:var(--mono);word-break:break-all}
+.events{max-height:220px;overflow-y:auto;font-family:var(--mono);font-size:11.5px;
+  color:var(--text-secondary);background:var(--surface-0);border:1px solid var(--border);
+  border-radius:8px;padding:10px;white-space:pre-wrap}
+.chart-block{margin-top:14px}
+.chart-title{font-size:12px;color:var(--text-secondary);margin-bottom:4px}
+.chart-title .dot{display:inline-block;width:9px;height:9px;border-radius:2px;
+  vertical-align:-1px;margin-right:6px}
+.chartwrap{position:relative}
+canvas{width:100%;height:110px;display:block}
+.tooltip{position:absolute;pointer-events:none;background:var(--surface-2);
+  border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11.5px;
+  font-family:var(--mono);color:var(--text-primary);display:none;white-space:nowrap;z-index:5}
+.result-json{max-height:320px;overflow:auto;background:var(--surface-0);
+  border:1px solid var(--border);border-radius:8px;padding:10px;
+  font-family:var(--mono);font-size:11px;color:var(--text-secondary);white-space:pre}
+.msg{font-size:12px;margin-top:8px;font-family:var(--mono);word-break:break-word}
+.msg.ok{color:var(--good)} .msg.err{color:var(--bad)}
+table.metrics{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
+table.metrics td{border-top:1px solid var(--border);padding:5px 6px}
+table.metrics td:first-child{color:var(--text-muted)}
+table.metrics td:last-child{font-family:var(--mono);text-align:right}
+.footer{color:var(--text-muted);font-size:11px;text-align:center;padding:8px}
+</style>
+</head>
+<body data-palette="#3987e5,#199e70">
+<div class="wrap">
+  <header>
+    <div>
+      <h1>evoquant</h1>
+      <div class="sub">universal pair-regime evolution searcher — control panel</div>
+    </div>
+    <span id="conn" class="badge">local mode</span>
+  </header>
+
+  <div class="disclaimer">
+    All numbers shown come from the <b>BAR_APPROXIMATION</b> reference engine under
+    <b>explicit, user-configured cost assumptions</b>. Tick/event and MQL5 real-tick
+    validation are PENDING for every candidate. <code>NO_EDGE_FOUND</code> is a normal,
+    honest outcome — a pass is never forced, and the final lockbox is never opened here.
+  </div>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Settings &amp; LLM connection</h2>
+      <div class="row">
+        <div><label>Provider</label>
+          <select id="provider">
+            <option value="openrouter">OpenRouter (free models available)</option>
+            <option value="openai">OpenAI (GPT)</option>
+          </select></div>
+        <div><label>Model</label>
+          <input id="model" placeholder="e.g. gpt-4o-mini / meta-llama/llama-3.3-70b-instruct:free"></div>
+      </div>
+      <label>API key <span style="color:var(--text-muted)">(stored locally, chmod 600 — never echoed back)</span></label>
+      <input id="apikey" type="password" placeholder="sk-… / sk-or-…">
+      <div class="row">
+        <button id="saveCfg">Save settings</button>
+        <button id="testLlm">Test connection</button>
+      </div>
+      <div id="llmMsg" class="msg"></div>
+    </section>
+
+    <section class="card">
+      <h2>Pairs <span style="text-transform:none;color:var(--text-muted)">— drop any ForexSB JSON into the data dir</span></h2>
+      <div id="pairs" class="pairs"><div class="msg">loading…</div></div>
+      <button id="refreshPairs">Rescan data dir</button>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>Run configuration</h2>
+    <div class="row3">
+      <div><label>Seed</label><input id="cfg_seed" type="number" value="20260710"></div>
+      <div><label>Max bars (recent window; blank = full)</label><input id="cfg_max_bars" type="number" value="12000"></div>
+      <div><label>Population</label><input id="cfg_population_size" type="number" value="10"></div>
+      <div><label>Generations</label><input id="cfg_n_generations" type="number" value="4"></div>
+      <div><label>Outer folds to search</label><input id="cfg_outer_folds_to_search" type="number" value="1"></div>
+      <div><label>Inner blocks / fold</label><input id="cfg_inner_blocks_per_fold" type="number" value="2"></div>
+      <div><label>Commission (fraction of notional)</label><input id="cfg_commission_pct_notional" type="number" step="0.0001" value="0.001"></div>
+      <div><label>Assumed spread (points)</label><input id="cfg_assumed_spread_points" type="number" step="0.1" value="5"></div>
+      <div><label>Initial equity</label><input id="cfg_initial_equity" type="number" value="1000000"></div>
+      <div><label>Lockbox bars (sealed, untouched)</label><input id="cfg_lockbox_bars" type="number" value="2000"></div>
+      <div><label>Outer test bars</label><input id="cfg_outer_test_bars" type="number" value="800"></div>
+      <div><label>Min train bars</label><input id="cfg_min_train_bars" type="number" value="4000"></div>
+      <div><label>Outer folds (plan)</label><input id="cfg_n_outer_folds" type="number" value="3"></div>
+      <div><label>Inner val bars</label><input id="cfg_inner_val_bars" type="number" value="400"></div>
+      <div><label>Inner folds (plan)</label><input id="cfg_n_inner_folds" type="number" value="3"></div>
+    </div>
+    <button id="startRun" class="primary" disabled>Start run on selected pair</button>
+    <div id="runMsg" class="msg"></div>
+  </section>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Runs</h2>
+      <div id="runs" class="runs"><div class="msg">no runs yet</div></div>
+    </section>
+
+    <section class="card" id="detailCard" style="display:none">
+      <h2>Run detail — <span id="dTitle" style="text-transform:none;font-family:var(--mono)"></span></h2>
+      <dl class="kv" id="dMeta"></dl>
+
+      <div class="chart-block">
+        <div class="chart-title"><span class="dot" style="background:var(--series-1)"></span>Hypervolume per generation</div>
+        <div class="chartwrap"><canvas id="hvChart"></canvas><div class="tooltip" id="hvTip"></div></div>
+      </div>
+      <div class="chart-block">
+        <div class="chart-title"><span class="dot" style="background:var(--series-2)"></span>Feasibility rate per generation</div>
+        <div class="chartwrap"><canvas id="feasChart"></canvas><div class="tooltip" id="feasTip"></div></div>
+      </div>
+
+      <div class="chart-block">
+        <div class="chart-title">Stage log</div>
+        <div id="dEvents" class="events"></div>
+      </div>
+
+      <div id="dResult" style="display:none">
+        <div class="chart-block"><div class="chart-title">Verdict &amp; outer-OOS evidence</div>
+          <div><span id="dVerdict" class="badge"></span>
+               <span id="dVerdictReason" class="msg" style="display:inline"></span></div>
+          <table class="metrics" id="dMetrics"></table>
+        </div>
+        <div class="chart-block"><div class="chart-title">Full report</div>
+          <div class="result-json" id="dJson"></div>
+        </div>
+        <button id="dDownload">Download report JSON</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="footer">evoquant · research telemetry, not investment advice ·
+    every artifact is reproducible from its manifest, seed and config hash</div>
+</div>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const api=(p,opt)=>fetch(p,opt).then(async r=>{const j=await r.json().catch(()=>({}));
+  if(!r.ok&&j.ok===undefined)throw new Error(j.message||j.error||r.status);return j;});
+let selectedPair=null, selectedRun=null, pollTimer=null;
+
+/* ---------- settings ---------- */
+async function loadConfig(){
+  try{const c=await api("/api/config");
+    if(c.provider)$("provider").value=c.provider;
+    if(c.model)$("model").value=c.model;
+    const p=c.secrets_present||{};
+    $("apikey").placeholder=(p.openai_api_key||p.openrouter_api_key)?
+      "saved key present — enter to replace":"sk-… / sk-or-…";
+  }catch(e){/* first boot */}
+}
+$("saveCfg").onclick=async()=>{
+  const body={provider:$("provider").value,model:$("model").value,
+    secrets:{}};
+  const key=$("apikey").value.trim();
+  if(key)body.secrets[$("provider").value==="openai"?"openai_api_key":"openrouter_api_key"]=key;
+  try{await api("/api/config",{method:"PUT",body:JSON.stringify(body)});
+    $("llmMsg").className="msg ok";$("llmMsg").textContent="settings saved";
+    $("apikey").value="";loadConfig();
+  }catch(e){$("llmMsg").className="msg err";$("llmMsg").textContent="save failed: "+e.message;}
+};
+$("testLlm").onclick=async()=>{
+  $("llmMsg").className="msg";$("llmMsg").textContent="testing…";
+  try{
+    const r=await api("/api/llm-test",{method:"POST",body:JSON.stringify({
+      provider:$("provider").value,model:$("model").value,api_key:$("apikey").value.trim()})});
+    if(r.ok){$("llmMsg").className="msg ok";
+      $("llmMsg").textContent=`OK — ${r.provider}/${r.model} · ${r.latency_s}s · reply: ${r.reply_preview}`;}
+    else{$("llmMsg").className="msg err";
+      $("llmMsg").textContent="failed: "+(r.message||JSON.stringify(r.details||r));}
+  }catch(e){$("llmMsg").className="msg err";$("llmMsg").textContent="failed: "+e.message;}
+};
+
+/* ---------- pairs ---------- */
+async function loadPairs(){
+  const box=$("pairs");
+  try{
+    const {pairs}=await api("/api/pairs");
+    box.innerHTML="";
+    if(!pairs.length){box.innerHTML='<div class="msg">no ForexSB JSON files found in the data dir</div>';return;}
+    for(const p of pairs){
+      const el=document.createElement("div");el.className="pair";
+      el.innerHTML=`<div><div class="sym">${p.symbol}</div>
+        <div class="meta">${p.name}</div></div>
+        <div class="meta">${p.n_bars.toLocaleString()} bars · M${p.period_minutes}</div>`;
+      el.onclick=()=>{selectedPair=p;
+        document.querySelectorAll(".pair").forEach(x=>x.classList.remove("selected"));
+        el.classList.add("selected");$("startRun").disabled=false;
+        $("startRun").textContent=`Start run on ${p.symbol}`;};
+      box.appendChild(el);
+    }
+  }catch(e){box.innerHTML=`<div class="msg err">${e.message}</div>`;}
+}
+$("refreshPairs").onclick=loadPairs;
+
+/* ---------- runs ---------- */
+function num(id){const v=$(id).value.trim();return v===""?null:Number(v);}
+$("startRun").onclick=async()=>{
+  if(!selectedPair)return;
+  const body={data_file:selectedPair.file};
+  for(const k of ["seed","max_bars","population_size","n_generations",
+    "outer_folds_to_search","inner_blocks_per_fold","commission_pct_notional",
+    "assumed_spread_points","initial_equity","lockbox_bars","outer_test_bars",
+    "min_train_bars","n_outer_folds","inner_val_bars","n_inner_folds"]){
+    const v=num("cfg_"+k); if(v!==null)body[k]=v;
+  }
+  $("runMsg").className="msg";$("runMsg").textContent="starting…";
+  try{
+    const st=await api("/api/runs",{method:"POST",body:JSON.stringify(body)});
+    $("runMsg").className="msg ok";$("runMsg").textContent="started "+st.run_id;
+    selectedRun=st.run_id; refreshRuns(); openDetail(st.run_id);
+  }catch(e){$("runMsg").className="msg err";$("runMsg").textContent="failed: "+e.message;}
+};
+async function refreshRuns(){
+  try{
+    const {runs}=await api("/api/runs");
+    const box=$("runs");box.innerHTML="";
+    if(!runs.length){box.innerHTML='<div class="msg">no runs yet</div>';return;}
+    for(const r of runs){
+      const el=document.createElement("div");
+      el.className="run"+(r.run_id===selectedRun?" selected":"");
+      el.innerHTML=`<div><div class="id">${r.run_id}</div>
+        <div class="meta" style="font-size:11px;color:var(--text-muted)">${r.symbol||""} ${r.started_at||""}</div></div>
+        <span class="badge ${r.verdict||r.state}">${r.verdict||r.state}</span>`;
+      el.onclick=()=>openDetail(r.run_id);
+      box.appendChild(el);
+    }
+  }catch(e){/* server booting */}
+}
+
+/* ---------- charts (single-series small multiples; hover tooltip) ---------- */
+function drawSeries(canvas,tip,points,color,fmt){
+  const dpr=window.devicePixelRatio||1;
+  const w=canvas.clientWidth||600,h=canvas.clientHeight||110;
+  canvas.width=w*dpr;canvas.height=h*dpr;
+  const ctx=canvas.getContext("2d");ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);
+  const padL=8,padR=46,padT=10,padB=14;
+  if(points.length===0){ctx.fillStyle="#8a897f";ctx.font="11px system-ui";
+    ctx.fillText("waiting for search telemetry…",padL,h/2);canvas.onmousemove=null;return;}
+  const xs=points.map(p=>p.x),ys=points.map(p=>p.y);
+  const x0=Math.min(...xs),x1=Math.max(...xs,x0+1);
+  let y0=Math.min(...ys),y1=Math.max(...ys);
+  if(y1-y0<1e-12){y0-=0.5;y1+=0.5;}
+  const X=v=>padL+(v-x0)/(x1-x0)*(w-padL-padR);
+  const Y=v=>h-padB-(v-y0)/(y1-y0)*(h-padT-padB);
+  /* recessive grid: 3 horizontal lines */
+  ctx.strokeStyle="#33332f";ctx.lineWidth=1;
+  for(let i=0;i<3;i++){const gy=padT+i*(h-padT-padB)/2;
+    ctx.beginPath();ctx.moveTo(padL,gy);ctx.lineTo(w-padR,gy);ctx.stroke();}
+  /* 2px line */
+  ctx.strokeStyle=color;ctx.lineWidth=2;ctx.lineJoin="round";ctx.beginPath();
+  points.forEach((p,i)=>{i?ctx.lineTo(X(p.x),Y(p.y)):ctx.moveTo(X(p.x),Y(p.y));});
+  ctx.stroke();
+  /* direct label on last value (selective, not every point) */
+  const last=points[points.length-1];
+  ctx.fillStyle=color;
+  ctx.beginPath();ctx.arc(X(last.x),Y(last.y),3.5,0,7);ctx.fill();
+  ctx.strokeStyle="#1a1a19";ctx.lineWidth=2;ctx.stroke(); /* 2px surface ring */
+  ctx.fillStyle="#c3c2b7";ctx.font="11px ui-monospace,monospace";
+  ctx.fillText(fmt(last.y),w-padR+6,Y(last.y)+4);
+  /* hover: nearest-point tooltip + crosshair */
+  canvas.onmousemove=ev=>{
+    const r=canvas.getBoundingClientRect(),mx=ev.clientX-r.left;
+    let best=points[0],bd=1e9;
+    for(const p of points){const d=Math.abs(X(p.x)-mx);if(d<bd){bd=d;best=p;}}
+    drawSeries(canvas,tip,points,color,fmt);
+    const c2=canvas.getContext("2d");c2.save();c2.scale(dpr,dpr);
+    c2.strokeStyle="#8a897f";c2.setLineDash([3,3]);
+    c2.beginPath();c2.moveTo(X(best.x),padT);c2.lineTo(X(best.x),h-padB);c2.stroke();c2.restore();
+    tip.style.display="block";
+    tip.style.left=Math.min(X(best.x)+10,w-130)+"px";tip.style.top="6px";
+    tip.textContent=`gen ${best.x}: ${fmt(best.y)}`;
+  };
+  canvas.onmouseleave=()=>{tip.style.display="none";drawSeries(canvas,tip,points,color,fmt);};
+}
+
+/* ---------- run detail ---------- */
+async function openDetail(runId){
+  selectedRun=runId;$("detailCard").style.display="block";
+  $("dTitle").textContent=runId;refreshRuns();
+  if(pollTimer)clearInterval(pollTimer);
+  const tick=async()=>{
+    try{
+      const d=await api("/api/runs/"+runId);
+      const gens=d.events.filter(e=>e.stage==="search_generation");
+      drawSeries($("hvChart"),$("hvTip"),
+        gens.map(g=>({x:g.generation,y:g.hypervolume})),
+        getComputedStyle(document.body).getPropertyValue("--series-1").trim(),
+        v=>v.toFixed(4));
+      drawSeries($("feasChart"),$("feasTip"),
+        gens.map(g=>({x:g.generation,y:g.feasibility_rate})),
+        getComputedStyle(document.body).getPropertyValue("--series-2").trim(),
+        v=>(100*v).toFixed(0)+"%");
+      $("dEvents").textContent=d.events.map(e=>{
+        const {stage,ts_utc,...rest}=e;
+        return `${(ts_utc||"").slice(11,19)}  ${stage}  ${JSON.stringify(rest).slice(0,160)}`;
+      }).join("\n")||"…";
+      $("dEvents").scrollTop=$("dEvents").scrollHeight;
+      $("dMeta").innerHTML=`<dt>state</dt><dd>${d.state}</dd>
+        <dt>data</dt><dd>${d.data_file}</dd>
+        <dt>started</dt><dd>${d.started_at||""}</dd>`;
+      if(d.state==="FINISHED"){await showResult(runId);clearInterval(pollTimer);refreshRuns();}
+      if(d.state==="ERROR"){
+        $("dResult").style.display="block";
+        $("dVerdict").className="badge ERROR";$("dVerdict").textContent="ERROR";
+        $("dVerdictReason").textContent=JSON.stringify(d.error).slice(0,400);
+        clearInterval(pollTimer);refreshRuns();}
+    }catch(e){/* transient */}
+  };
+  await tick(); pollTimer=setInterval(tick,2000);
+}
+async function showResult(runId){
+  const rep=await api(`/api/runs/${runId}/report`);
+  $("dResult").style.display="block";
+  $("dVerdict").className="badge "+rep.verdict;$("dVerdict").textContent=rep.verdict;
+  $("dVerdictReason").textContent=" "+(rep.verdict_reason||"");
+  const oos=(rep.champion||{}).oos_eval||{};
+  const val=rep.validation||{};
+  const rows=[
+    ["symbol",rep.symbol],["experiment",rep.experiment_id],
+    ["outer-OOS return(s)",JSON.stringify(oos.fold_returns)],
+    ["outer-OOS trades",oos.n_trades_total],
+    ["outer-OOS max drawdown",oos.max_drawdown!=null?(100*oos.max_drawdown).toFixed(2)+"%":"—"],
+    ["deflated Sharpe",(val.deflated_sharpe||{}).deflated_sharpe??"skipped"],
+    ["effective trials",val.effective_trials??"—"],
+    ["PBO (CSCV)",(val.pbo_cscv||{}).pbo??"skipped"],
+    ["cost-stress survives 3× spread",(val.cost_stress||{}).survives_worst_case],
+    ["lockbox","SEALED — never opened by a run"],
+  ];
+  $("dMetrics").innerHTML=rows.map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join("");
+  $("dJson").textContent=JSON.stringify(rep,null,2);
+  $("dDownload").onclick=()=>{window.location=`/api/runs/${runId}/download`;};
+}
+
+/* ---------- boot ---------- */
+loadConfig();loadPairs();refreshRuns();setInterval(refreshRuns,5000);
+</script>
+</body>
+</html>

@@ -159,10 +159,31 @@ Legend: ✅ VERIFIED (test evidence) · 🟡 PARTIAL · ⏳ PENDING · ❌ NOT B
 | EA compiled and run in a real Strategy Tester | ⏳ PENDING_REAL_TICK | no terminal in this environment — RUN_INSTRUCTIONS.md |
 | Python↔EA live parity on real ticks | ⏳ PENDING_REAL_TICK | blocked on the above |
 
+## Phase 9 — full experiment orchestration + dashboard
+
+| Claim | Status | Evidence |
+|---|---|---|
+| Pair-agnostic end-to-end run (load→seal→search→OOS→validation→verdict→bundle) | ✅ | `tests/integration/test_phase9_e2e.py::TestOrchestrator::test_end_to_end_run_is_honest_and_complete` |
+| A different-symbol file runs identically (BNBUSDT is just a sample) | ✅ | `TestOrchestrator::test_synthetic_second_pair_file_also_runs` |
+| Same file+seed ⇒ identical champion+verdict (reproducible) | ✅ | `TestOrchestrator::test_run_is_pair_agnostic_reproducible` |
+| Verdict ∈ SHORTLISTED/NO_EDGE_FOUND/REJECTED; never forced | ✅ | orchestrator + real offline run → NO_EDGE_FOUND |
+| Lockbox never opened by a run; model card + repro emitted | ✅ | `TestOrchestrator` artifact assertions |
+| Dashboard offline-safe (no external refs, same-origin fetch only) | ✅ | `TestDashboardOfflineSafety` + headless zero-external assertion |
+| Dynamic pair discovery from the data dir | ✅ | `TestControlPlaneApi`, browser run |
+| Config round-trips; API keys stored but never echoed | ✅ | `TestControlPlaneApi` (secret absent from responses) |
+| Run lifecycle + honest ERROR surfacing + report download | ✅ | `TestControlPlaneApi::test_run_lifecycle_and_download` + browser download |
+| LLM test fails closed without a key | ✅ | `TestControlPlaneApi::test_llm_test_with_injected_transport_not_needed` |
+| Cloudflare Worker embeds same UI, KV bindings, runner-token gate | ✅ | `TestCloudflareWorker::test_worker_bundle_embeds_same_dashboard` |
+| **Real offline browser run** (Chromium): pairs→config→run→charts→verdict→download | ✅ | headless Playwright drive: 0 external requests, 0 console errors, verdict NO_EDGE_FOUND |
+| Cloudflare Worker deployed live | ⏳ PENDING | no Cloudflare account — bundle + `wrangler` commands only |
+| Per-regime island hierarchy in the orchestrator | ❌ | KNOWN_LIMITATIONS.md #46 |
+
 ## Later phases
 
 | Component | Status |
 |---|---|
+| _All phases 0–9 built._ | ✅ |
 
 No performance claim of any kind is validated. The v8 artifacts' metrics
-are documented as invalid in `docs/FORENSIC_AUDIT.md`.
+are documented as invalid in `docs/FORENSIC_AUDIT.md`. The one real
+end-to-end run's honest outcome was `NO_EDGE_FOUND`.

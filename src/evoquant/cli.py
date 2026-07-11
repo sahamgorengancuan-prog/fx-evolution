@@ -12,6 +12,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 from evoquant import repro
 from evoquant.data.loaders import load_fsb_json
@@ -96,6 +97,42 @@ def _cmd_mql5_parity(args: argparse.Namespace) -> int:
     return 0 if report.status == "PASS" else 1
 
 
+def _cmd_run(args: argparse.Namespace) -> int:
+    from evoquant.experiment.orchestrator import RunConfig, run_experiment
+
+    overrides: dict[str, Any] = {}
+    if args.config:
+        overrides = dict(json.loads(Path(args.config).read_text()))
+    for name in ("seed", "max_bars", "population_size", "n_generations"):
+        val = getattr(args, name)
+        if val is not None:
+            overrides[name] = val
+    config = RunConfig(data_file=args.data, out_dir=args.out_dir, **overrides)
+    report = run_experiment(config, on_progress=lambda e: print(
+        json.dumps({"stage": e["stage"], **{k: v for k, v in e.items()
+                    if k in ("symbol", "fold", "generation", "verdict")}}),
+        file=sys.stderr,
+    ))
+    print(json.dumps({"verdict": report["verdict"], "experiment_id": report["experiment_id"],
+                      "report": str(Path(args.out_dir) / "report.json")}, indent=2))
+    return 0
+
+
+def _cmd_serve(args: argparse.Namespace) -> int:
+    from evoquant.webui.server import serve
+
+    serve(args.state_dir, args.data_dir, args.host, args.port)
+    return 0
+
+
+def _cmd_build_worker(args: argparse.Namespace) -> int:
+    from evoquant.webui.cloudflare import build_worker_bundle
+
+    paths = build_worker_bundle(args.out_dir)
+    print(json.dumps(paths, indent=2))
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="evoquant")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -125,6 +162,27 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--trades", required=True, help="EA evoquant_trades.csv")
     p.add_argument("--price-atol", type=float, default=1e-6)
     p.set_defaults(func=_cmd_mql5_parity)
+
+    p = sub.add_parser("run", help="Run a full end-to-end experiment on any pair")
+    p.add_argument("data", help="ForexSB JSON file (any pair)")
+    p.add_argument("--out-dir", required=True)
+    p.add_argument("--config", help="JSON with RunConfig overrides")
+    p.add_argument("--seed", type=int)
+    p.add_argument("--max-bars", type=int, dest="max_bars")
+    p.add_argument("--population-size", type=int, dest="population_size")
+    p.add_argument("--generations", type=int, dest="n_generations")
+    p.set_defaults(func=_cmd_run)
+
+    p = sub.add_parser("serve", help="Serve the offline control-plane dashboard")
+    p.add_argument("--data-dir", default="data/raw")
+    p.add_argument("--state-dir", default="artifacts/webui")
+    p.add_argument("--host", default="127.0.0.1")
+    p.add_argument("--port", type=int, default=8787)
+    p.set_defaults(func=_cmd_serve)
+
+    p = sub.add_parser("build-worker", help="Generate the Cloudflare Worker bundle")
+    p.add_argument("--out-dir", required=True)
+    p.set_defaults(func=_cmd_build_worker)
 
     args = parser.parse_args(argv)
     try:

@@ -171,3 +171,31 @@ Honest inventory. Anything listed here is *by design not claimed to work*.
     native report is a future cross-check.
 45. **Custom-symbol creation and tick import are documented, not
     automated** (MT5 offers no portable CLI for it).
+
+## Phase 9 (current)
+
+46. **The orchestrator searches one pooled policy per fold**, not the full
+    per-regime island hierarchy. Regime labels are computed and recorded,
+    but a single policy is evolved against the fold's inner blocks;
+    per-regime sub-policies remain future work (KNOWN #26 still applies).
+47. **The offline server is single-user and unauthenticated** — it binds
+    to 127.0.0.1 by design. It is a local control panel, not a
+    multi-tenant service; do not expose it to a network without adding
+    auth.
+48. **The Cloudflare Worker has never been deployed** — no Cloudflare
+    account exists in this environment. `build-worker` emits a
+    wrangler-ready bundle and the exact deploy commands; actual
+    `wrangler deploy` + the live KV/secret wiring are PENDING, and the
+    runner→Worker publish path is documented but unexercised against a
+    real Worker.
+49. **The dashboard's live LLM "test connection" needs real network**;
+    it is fail-closed without a key and exercised offline only via the
+    injected-transport unit tests, not against a live provider from CI.
+50. **Run scheduling is a background thread, not a job queue.** Fine for a
+    local single-user panel; concurrent heavy runs share the process and
+    there is no persistence of the thread across a server restart (the
+    status file is, but an in-flight run is not resumed).
+51. **The verdict thresholds (DSR≥0.5, target vector) are defaults**, not
+    calibrated acceptance bars for live capital. They gate research
+    shortlisting only; tick + MQL5 + lockbox stages still stand between
+    a SHORTLISTED candidate and any deployment claim.

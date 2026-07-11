@@ -254,3 +254,40 @@ have full ADRs in `docs/adr/`.
     dumps vs tester dumps) so the manual loop needs no Python object
     reconstruction, and it persists `parity_report.json` + flips
     `parity_status.json` in the bundle.
+
+## 2026-07-11 — Phase 9
+
+59. **The orchestrator never names a symbol.** `run_experiment` takes any
+    ForexSB JSON + a `RunConfig`; BNBUSDT is only the committed sample. A
+    synthetic second-symbol file runs identically (tested). Pair-agnostic
+    by construction was the user's explicit requirement.
+60. **Outer-OOS is the model-selection surface, not the inner folds.** The
+    champion is chosen on inner-validation blocks, then evaluated once on
+    the untouched outer test fold; the verdict keys off that OOS result +
+    the deflated-Sharpe battery. The lockbox is never opened by a run —
+    freezing and the one-shot open stay deliberate human actions.
+61. **Three honest verdicts, never a forced pass**: SHORTLISTED (OOS
+    feasible and DSR≥0.5), REJECTED (OOS feasible but DSR<0.5), or
+    NO_EDGE_FOUND. The offline demo run landed on NO_EDGE_FOUND — the
+    correct outcome for a real 6k-bar BNBUSDT slice under honest costs.
+62. **Control plane vs compute plane** (user's Cloudflare requirement):
+    the numpy search cannot run on a Worker (CPU-time limits), so the
+    Worker + offline server are control-only (config, KV, key testing,
+    run monitoring, results/download). Neither computes fitness nor
+    stores lockbox data. The Worker embeds the *same* dashboard HTML the
+    offline server serves — one UI, two hosts.
+63. **The dashboard is strictly offline-capable**: no CDN, no external
+    fonts/scripts/images, every fetch same-origin, charts hand-drawn on
+    canvas. A regex test forbids external resource refs; a real headless
+    Chromium run asserts zero external network requests and zero console
+    errors end-to-end.
+64. **Secrets never leave the server.** API keys are stored 0600 on the
+    local server / as `wrangler secret` on the Worker; only presence
+    flags (`secrets_present`) are returned to the UI. Verified by a test
+    asserting the saved key never appears in any API response.
+65. **A real offline browser run is part of acceptance.** Playwright
+    drives the dashboard against the committed data: dynamic pair
+    discovery → config → start → live telemetry chart render (verified by
+    counting non-transparent canvas pixels) → terminal verdict → download
+    whose report matches. This is the "coba satu kali run offline dan
+    sempurnakan" the user asked for.
