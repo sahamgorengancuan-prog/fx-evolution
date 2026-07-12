@@ -291,3 +291,37 @@ have full ADRs in `docs/adr/`.
     counting non-transparent canvas pixels) → terminal verdict → download
     whose report matches. This is the "coba satu kali run offline dan
     sempurnakan" the user asked for.
+
+## 2026-07-11 — Phase 9 revision (offline-only, Gradio one-click)
+
+66. **User pivot: offline-only, drop Cloudflare.** Removed the Cloudflare
+    Worker generator, its CLI command, and its test. The system now has
+    zero external-service surface. (Git history retains the removed code
+    if ever wanted.)
+67. **Gradio is the primary UI**, launched by a one-click `run_all.bat`
+    (Windows) / `run_all.sh` (Unix twin) that creates a venv, installs
+    `.[gui]`, and opens the browser via `evoquant gui` (Gradio
+    `inbrowser=True`). Gradio is an **optional** dependency — the engine
+    and the stdlib dashboard never import it; `gradio_app` raises a clear
+    install hint if it's missing.
+68. **Kept the zero-dependency stdlib dashboard** (`evoquant serve`) as an
+    offline fallback for environments without Gradio. Two offline
+    front-ends, one orchestrator; neither computes fitness or opens the
+    lockbox.
+69. **The Gradio run handler streams via a queue+thread**: the
+    orchestrator's `on_progress` pushes events onto a `queue.Queue`
+    drained by a generator that yields live status + a growing telemetry
+    table, then a terminal frame with verdict, outer-OOS metrics, full
+    report, and a downloadable `report.json`.
+70. **Friendly config-fit errors.** The offline browser drive on a
+    deliberately-small data slice surfaced a raw `SplitConfigError` when
+    the split didn't fit; the handler now catches it and tells the user
+    exactly which knobs to change (max bars / lockbox / fold sizes). Found
+    by driving the real UI and fixed — the "sempurnakan" step.
+71. **Verified end-to-end in a real headless Gradio session**: pairs
+    discovered → Run clicked → 4 generations streamed (incl. a
+    LOCAL_REFINEMENT intervention) → verdict `NO_EDGE_FOUND` with honest
+    reasons → 12.8 KB report downloadable. Zero external network requests.
+72. **mypy stays strict everywhere except the thin `gradio_app` glue**
+    (Gradio ships no stubs); one narrow per-module override, documented in
+    pyproject.

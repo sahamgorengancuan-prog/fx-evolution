@@ -116,33 +116,34 @@ trade level. Real-terminal execution marked PENDING where no terminal.
 signals bit-for-bar; parity report itemizes every discrepancy; missing
 terminal ⇒ artifact bundle + exact manual command, never fake success.
 
-## Phase 9 — Full experiment, model card & Cloudflare control plane
+## Phase 9 — Full experiment, model card & offline one-click app
 
 **Objective.** One-pair (BNBUSDT) end-to-end: manifest → seal → search →
 shortlist → tick validation → (MQL5 parity) → freeze → lockbox once →
 model card or rejection report. Generalize to more pairs only after pass.
 
-**Plus (user requirement, 2026-07-10): a Cloudflare Workers dashboard.**
-Architecture decision: Workers cannot run the numpy search (CPU-time
-limits), so the Worker is the **control plane** and the Python engine
-remains the **compute plane**:
-- single Worker (no build step) serving an embedded HTML/JS UI;
-- KV-backed settings: pair list, split/target/search configs, provider
-  choice; secrets (`wrangler secret`) for API keys — env-var save;
-- "Test connection" endpoint proxying OpenAI / OpenRouter chat
-  completions with the stored key (mirrors `evoquant.llm.client`);
-- run registry: the Python runner authenticates with a runner token,
-  posts heartbeats/telemetry, uploads result JSON artifacts;
-- results browser: list runs, live-poll telemetry, view verdicts,
-  download artifacts;
-- the Worker never computes fitness and never stores lockbox data —
-  the same governance rules apply to the dashboard.
+**Plus (user requirement, revised 2026-07-12): a fully offline one-click
+app.** The 2026-07-10 Cloudflare Workers dashboard was removed after the
+user changed direction to "offline saja (tanpa cloudflare)"; the
+architecture note that killed it still holds — Workers cannot run the
+numpy search under CPU-time limits, and a hosted panel adds a network
+surface the project does not want. The offline replacement:
+- a **Gradio** Blocks app (`evoquant.webui.gradio_app`, primary front-end):
+  dynamic pair discovery from the data dir, split/target/search config,
+  provider choice + "Test connection", a run streamed live over a
+  queue+thread with telemetry/verdict/metrics and a report download;
+- a **zero-dependency stdlib** dashboard (`evoquant.webui.server` +
+  `dashboard.html`) as the no-install fallback (same governance rules);
+- **one-click** `run_all.bat` / `run_all.sh`: locate Python, create a
+  venv, install `-e ".[gui]"`, launch `evoquant gui`, open the browser;
+- both front-ends bind 127.0.0.1, never compute fitness, never store
+  lockbox data, and fail closed without an API key. No cloud path.
 
 **Acceptance.** Experiment replay from manifest reproduces decisions;
 lockbox event log shows exactly one open; model card includes negative
-evidence; `REJECTED`/`NO_EDGE_FOUND` produce complete reports too.
-Dashboard: config round-trips through KV; key test returns provider
-latency/model or a structured error; a runner-published result is
-listable, viewable, and downloadable byte-identical; deployed-Worker
-end-to-end marked with exact `wrangler deploy` commands (real-account
-execution PENDING where no Cloudflare credentials exist in CI).
+evidence; `REJECTED`/`NO_EDGE_FOUND` produce complete reports too. App:
+pairs discovered from the data dir; config round-trips; key test returns
+provider latency/model or a structured error; a streamed run reaches a
+terminal verdict with a verdict-matched downloadable report; a real
+headless-Chromium drive of the Gradio app completes an end-to-end run
+with zero external network requests.

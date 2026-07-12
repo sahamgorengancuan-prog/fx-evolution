@@ -159,7 +159,7 @@ Legend: ✅ VERIFIED (test evidence) · 🟡 PARTIAL · ⏳ PENDING · ❌ NOT B
 | EA compiled and run in a real Strategy Tester | ⏳ PENDING_REAL_TICK | no terminal in this environment — RUN_INSTRUCTIONS.md |
 | Python↔EA live parity on real ticks | ⏳ PENDING_REAL_TICK | blocked on the above |
 
-## Phase 9 — full experiment orchestration + dashboard
+## Phase 9 — full experiment orchestration + offline Gradio app
 
 | Claim | Status | Evidence |
 |---|---|---|
@@ -168,14 +168,17 @@ Legend: ✅ VERIFIED (test evidence) · 🟡 PARTIAL · ⏳ PENDING · ❌ NOT B
 | Same file+seed ⇒ identical champion+verdict (reproducible) | ✅ | `TestOrchestrator::test_run_is_pair_agnostic_reproducible` |
 | Verdict ∈ SHORTLISTED/NO_EDGE_FOUND/REJECTED; never forced | ✅ | orchestrator + real offline run → NO_EDGE_FOUND |
 | Lockbox never opened by a run; model card + repro emitted | ✅ | `TestOrchestrator` artifact assertions |
-| Dashboard offline-safe (no external refs, same-origin fetch only) | ✅ | `TestDashboardOfflineSafety` + headless zero-external assertion |
-| Dynamic pair discovery from the data dir | ✅ | `TestControlPlaneApi`, browser run |
+| Gradio app builds offline; discovers pairs; streams a run to a terminal verdict | ✅ | `tests/integration/test_phase9_gradio.py` (`_pairs_table`, `build_app`, streamed `_run_streaming`) |
+| Gradio run streams ≥2 telemetry frames, 6-tuple rows, lockbox metric, verdict-matched report download | ✅ | `test_phase9_gradio.py::test_run_streaming_reaches_a_terminal_verdict` |
+| Gradio run requires a selected pair (fails friendly) | ✅ | `test_phase9_gradio.py::test_run_requires_a_pair` |
+| Config-fit errors surface as actionable guidance (not a raw SplitConfigError) | ✅ | worker catches `SplitConfigError`; browser-verified friendly message |
+| Stdlib dashboard offline-safe (no external refs, same-origin fetch only) | ✅ | `TestDashboardOfflineSafety` + headless zero-external assertion |
+| Dynamic pair discovery from the data dir | ✅ | `TestControlPlaneApi`, `discover_pairs`, browser run |
 | Config round-trips; API keys stored but never echoed | ✅ | `TestControlPlaneApi` (secret absent from responses) |
 | Run lifecycle + honest ERROR surfacing + report download | ✅ | `TestControlPlaneApi::test_run_lifecycle_and_download` + browser download |
 | LLM test fails closed without a key | ✅ | `TestControlPlaneApi::test_llm_test_with_injected_transport_not_needed` |
-| Cloudflare Worker embeds same UI, KV bindings, runner-token gate | ✅ | `TestCloudflareWorker::test_worker_bundle_embeds_same_dashboard` |
-| **Real offline browser run** (Chromium): pairs→config→run→charts→verdict→download | ✅ | headless Playwright drive: 0 external requests, 0 console errors, verdict NO_EDGE_FOUND |
-| Cloudflare Worker deployed live | ⏳ PENDING | no Cloudflare account — bundle + `wrangler` commands only |
+| **Real offline browser run** (Chromium) of the Gradio app: pairs→config→streamed run→verdict→download | ✅ | headless Playwright drive: 0 external requests, verdict NO_EDGE_FOUND, downloadable report.json |
+| Hosted/serverless deployment | ❌ | Not built — offline-only by decision (KNOWN_LIMITATIONS.md #48) |
 | Per-regime island hierarchy in the orchestrator | ❌ | KNOWN_LIMITATIONS.md #46 |
 
 ## Later phases

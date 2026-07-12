@@ -13,10 +13,10 @@ Serves the self-contained dashboard and a JSON API:
     GET  /api/runs/{id}/report  full report JSON
     GET  /api/runs/{id}/download  report as attachment
 
-The same dashboard HTML is embedded into the Cloudflare Worker by
-`cloudflare/build_worker.py`; this server is the offline twin. Secrets are
-stored in `<state>/secrets.json` with 0600 permissions and are never
-echoed back; only presence flags leave the server.
+This is the zero-dependency, no-install fallback for the offline Gradio app
+(`evoquant.webui.gradio_app`); it serves the same governance rules with only
+the stdlib. Secrets are stored in `<state>/secrets.json` with 0600
+permissions and are never echoed back; only presence flags leave the server.
 """
 from __future__ import annotations
 
@@ -33,6 +33,29 @@ from evoquant.errors import EvoquantError
 
 _DASHBOARD = Path(__file__).with_name("dashboard.html")
 _RUN_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+
+
+def discover_pairs(data_dir: str | Path) -> list[dict[str, Any]]:
+    """Any ForexSB JSON dropped into the data dir becomes a runnable pair."""
+    out: list[dict[str, Any]] = []
+    for path in sorted(Path(data_dir).glob("*.json")):
+        try:
+            doc = json.loads(path.read_text())
+            if not all(k in doc for k in ("symbol", "period", "time", "close")):
+                continue
+            out.append(
+                {
+                    "file": str(path),
+                    "name": path.name,
+                    "symbol": str(doc["symbol"]),
+                    "period_minutes": int(doc["period"]),
+                    "n_bars": len(doc["time"]),
+                    "description": doc.get("description", ""),
+                }
+            )
+        except (json.JSONDecodeError, OSError, ValueError, TypeError):
+            continue
+    return out
 
 
 class WebUIState:
@@ -92,26 +115,7 @@ class WebUIState:
     # ---- pair discovery ---------------------------------------------- #
 
     def discover_pairs(self) -> list[dict[str, Any]]:
-        """Any ForexSB JSON dropped into the data dir becomes a pair."""
-        out: list[dict[str, Any]] = []
-        for path in sorted(self.data_dir.glob("*.json")):
-            try:
-                doc = json.loads(path.read_text())
-                if not all(k in doc for k in ("symbol", "period", "time", "close")):
-                    continue
-                out.append(
-                    {
-                        "file": str(path),
-                        "name": path.name,
-                        "symbol": str(doc["symbol"]),
-                        "period_minutes": int(doc["period"]),
-                        "n_bars": len(doc["time"]),
-                        "description": doc.get("description", ""),
-                    }
-                )
-            except (json.JSONDecodeError, OSError, ValueError, TypeError):
-                continue
-        return out
+        return discover_pairs(self.data_dir)
 
     # ---- runs ---------------------------------------------------------- #
 

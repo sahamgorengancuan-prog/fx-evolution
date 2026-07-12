@@ -18,9 +18,9 @@ is absent by construction) — plus MQL5 export (P8): deterministic EA
 transpilation mirroring Tier-A semantics, real-tick tester configs, CSV
 parity contracts and a three-state differential comparator (default
 PENDING_REAL_TICK); and the full pair-agnostic experiment orchestrator
-with an offline control-plane dashboard + Cloudflare Worker (P9). Any
-ForexSB JSON dropped into the data dir becomes a runnable pair — BNBUSDT
-is just the first sample. No performance claims.
+with a **fully offline** one-click **Gradio** app (P9). Any ForexSB JSON
+dropped into the data dir becomes a runnable pair — BNBUSDT is just the
+first sample. No Cloudflare, no external services. No performance claims.
 
 - Forensic audit of the previous (v8) system: [`docs/FORENSIC_AUDIT.md`](docs/FORENSIC_AUDIT.md)
 - Phase plan & acceptance criteria: [`docs/PHASE_PLAN.md`](docs/PHASE_PLAN.md)
@@ -58,12 +58,15 @@ python -m evoquant.cli experiment-create data/raw/BNBUSDT_H1.json \
 python -m evoquant.cli run data/raw/BNBUSDT_H1.json --out-dir experiments/run1 \
     --max-bars 12000 --generations 4
 
-# offline control-plane dashboard — drop any pair JSON into --data-dir
-python -m evoquant.cli serve --data-dir data/raw --port 8787
-#   -> open http://127.0.0.1:8787/  (dynamic pairs, LLM key test, run monitor, download)
+# ONE-CLICK offline app (creates venv, installs, opens the browser):
+#   Windows:  double-click run_all.bat
+#   macOS/Linux:  ./run_all.sh
+# or directly:
+python -m evoquant.cli gui --data-dir data/raw
+#   -> opens http://127.0.0.1:7860/ in your browser (Gradio, fully offline)
 
-# generate the Cloudflare Worker (same UI; deploy with wrangler)
-python -m evoquant.cli build-worker --out-dir artifacts/worker
+# zero-dependency stdlib fallback (no Gradio):
+python -m evoquant.cli serve --data-dir data/raw --port 8787
 ```
 
 ## Layout
@@ -134,10 +137,11 @@ src/evoquant/
   experiment/
     orchestrator.py    pair-agnostic end-to-end run + model card
   webui/
-    server.py          offline control-plane API (stdlib http.server)
-    dashboard.html     self-contained UI (no CDN; runs fully offline)
-    cloudflare.py      Cloudflare Worker bundle generator (same UI)
+    gradio_app.py      one-click offline Gradio UI (primary)
+    server.py          zero-dependency stdlib dashboard (fallback)
+    dashboard.html     self-contained stdlib UI (no CDN, offline)
   cli.py
+run_all.bat / run_all.sh   one-click: venv -> install -> open Gradio
 ```
 
 First end-to-end instrument: **BNBUSDT H1** (75,791 bars, 2017-11-06 →

@@ -1,7 +1,11 @@
-"""Offline control-plane dashboard + local API server (Phase 9).
+"""Offline UI for evoquant (Phase 9). No external services.
 
-The same `dashboard.html` is served here (stdlib http.server) and embedded
-into the Cloudflare Worker. The Worker is the control plane; the Python
-engine is the compute plane. Neither computes fitness or stores lockbox
-data.
+Two fully-offline front-ends over the same pair-agnostic orchestrator:
+
+* ``gradio_app`` — the one-click app (``evoquant gui`` / run_all.bat|sh)
+  that opens in the browser. Primary UI.
+* ``server`` + ``dashboard.html`` — a zero-dependency stdlib fallback
+  (``evoquant serve``) for environments without Gradio.
+
+Neither computes fitness, and neither opens the sealed lockbox.
 """

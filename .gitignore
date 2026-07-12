@@ -8,3 +8,4 @@ experiments/
 artifacts/
 build/
 dist/
+.venv/

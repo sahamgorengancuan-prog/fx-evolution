@@ -178,23 +178,26 @@ Honest inventory. Anything listed here is *by design not claimed to work*.
     per-regime island hierarchy. Regime labels are computed and recorded,
     but a single policy is evolved against the fold's inner blocks;
     per-regime sub-policies remain future work (KNOWN #26 still applies).
-47. **The offline server is single-user and unauthenticated** — it binds
-    to 127.0.0.1 by design. It is a local control panel, not a
-    multi-tenant service; do not expose it to a network without adding
-    auth.
-48. **The Cloudflare Worker has never been deployed** — no Cloudflare
-    account exists in this environment. `build-worker` emits a
-    wrangler-ready bundle and the exact deploy commands; actual
-    `wrangler deploy` + the live KV/secret wiring are PENDING, and the
-    runner→Worker publish path is documented but unexercised against a
-    real Worker.
-49. **The dashboard's live LLM "test connection" needs real network**;
+47. **The offline front-ends are single-user and unauthenticated** — the
+    Gradio app and the stdlib server both bind to 127.0.0.1 by design.
+    They are local control panels, not multi-tenant services; do not
+    expose them to a network without adding auth (Gradio's `share=` tunnel
+    is deliberately off).
+48. **No hosted/serverless deployment.** This build is offline-only by
+    decision (see DECISIONS.md, Phase-9 revision): the earlier Cloudflare
+    Worker control-plane was removed because the numpy search cannot run
+    under Worker CPU limits and a hosted panel added a network surface the
+    project does not want. One-click `run_all.bat`/`run_all.sh` bootstrap a
+    local venv and open the Gradio app; there is no cloud path.
+49. **The front-ends' live LLM "test connection" needs real network**;
     it is fail-closed without a key and exercised offline only via the
     injected-transport unit tests, not against a live provider from CI.
-50. **Run scheduling is a background thread, not a job queue.** Fine for a
-    local single-user panel; concurrent heavy runs share the process and
-    there is no persistence of the thread across a server restart (the
-    status file is, but an in-flight run is not resumed).
+50. **Run scheduling is a background thread, not a job queue.** Both the
+    Gradio worker thread and the stdlib server run one heavy job in-process;
+    concurrent runs share the process and an in-flight run is not resumed
+    across a restart (the stdlib status file survives, the running thread
+    does not). Gradio streams progress over its own queue; if the browser
+    tab closes mid-run the thread keeps going but its frames are dropped.
 51. **The verdict thresholds (DSR≥0.5, target vector) are defaults**, not
     calibrated acceptance bars for live capital. They gate research
     shortlisting only; tick + MQL5 + lockbox stages still stand between

@@ -1,17 +1,16 @@
 """Phase-9 acceptance: pair-agnostic end-to-end run on the real file, the
-offline control-plane API, and the Cloudflare worker + offline-safety."""
+offline stdlib control-plane API, and offline-safety. (Cloudflare removed —
+offline-only per the user's revised requirement.)"""
 from __future__ import annotations
 
 import json
 import re
 import threading
 import urllib.request
-from pathlib import Path
 
 import pytest
 
 from evoquant.experiment.orchestrator import RunConfig, run_experiment
-from evoquant.webui.cloudflare import build_worker_bundle
 from evoquant.webui.server import make_server
 from tests.conftest import REAL_DATA, REPO_ROOT
 
@@ -187,21 +186,3 @@ class TestControlPlaneApi:
             assert r.get("ok") is not True  # no key => not ok
         finally:
             server.shutdown()
-
-
-class TestCloudflareWorker:
-    def test_worker_bundle_embeds_same_dashboard(self, tmp_path):
-        paths = build_worker_bundle(tmp_path / "worker")
-        worker = Path(paths["worker"]).read_text()
-        toml = Path(paths["wrangler_toml"]).read_text()
-        readme = Path(paths["readme"]).read_text()
-        # the exact dashboard html is embedded
-        dashboard = (REPO_ROOT / "src" / "evoquant" / "webui" / "dashboard.html").read_text()
-        assert json.dumps(dashboard) in worker
-        # KV bindings + real-tick governance + runner token gate
-        assert "EVOQUANT_KV" in toml and "EVOQUANT_RUNS" in toml
-        assert "wrangler secret put OPENAI_API_KEY" in readme
-        assert "EVOQUANT_RUNNER_TOKEN" in worker  # runner auth enforced
-        assert "never computes fitness" in worker
-        # deploy is documented, not executed
-        assert "wrangler deploy" in readme

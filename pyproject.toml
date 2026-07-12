@@ -12,11 +12,18 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+gui = [
+    "gradio>=4.44",
+]
 dev = [
     "pytest>=8",
     "ruff>=0.4",
     "mypy>=1.10",
+    "gradio>=4.44",
 ]
+
+[project.scripts]
+evoquant = "evoquant.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -36,12 +43,15 @@ target-version = "py311"
 select = ["E", "F", "W", "I", "B", "UP"]
 ignore = ["E741"]  # l as OHLC low is idiomatic here
 
-[tool.ruff.lint.per-file-ignores]
-# embeds JS/HTML strings whose line length is not Python's concern
-"src/evoquant/webui/cloudflare.py" = ["E501"]
-
 [tool.mypy]
 python_version = "3.11"
 strict = true
 packages = ["evoquant"]
 mypy_path = "src"
+
+# Gradio ships no type stubs; relax only the thin UI glue that wraps it.
+# The whole engine stays strict.
+[[tool.mypy.overrides]]
+module = "evoquant.webui.gradio_app"
+disallow_untyped_defs = false
+warn_return_any = false

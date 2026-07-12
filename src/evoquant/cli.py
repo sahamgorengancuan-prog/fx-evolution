@@ -125,11 +125,17 @@ def _cmd_serve(args: argparse.Namespace) -> int:
     return 0
 
 
-def _cmd_build_worker(args: argparse.Namespace) -> int:
-    from evoquant.webui.cloudflare import build_worker_bundle
+def _cmd_gui(args: argparse.Namespace) -> int:
+    from evoquant.webui.gradio_app import launch
 
-    paths = build_worker_bundle(args.out_dir)
-    print(json.dumps(paths, indent=2))
+    launch(
+        data_dir=args.data_dir,
+        out_root=args.out_dir,
+        host=args.host,
+        port=args.port,
+        open_browser=not args.no_browser,
+        share=False,
+    )
     return 0
 
 
@@ -173,16 +179,20 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--generations", type=int, dest="n_generations")
     p.set_defaults(func=_cmd_run)
 
-    p = sub.add_parser("serve", help="Serve the offline control-plane dashboard")
+    p = sub.add_parser("serve", help="Serve the offline stdlib dashboard (no deps)")
     p.add_argument("--data-dir", default="data/raw")
     p.add_argument("--state-dir", default="artifacts/webui")
     p.add_argument("--host", default="127.0.0.1")
     p.add_argument("--port", type=int, default=8787)
     p.set_defaults(func=_cmd_serve)
 
-    p = sub.add_parser("build-worker", help="Generate the Cloudflare Worker bundle")
-    p.add_argument("--out-dir", required=True)
-    p.set_defaults(func=_cmd_build_worker)
+    p = sub.add_parser("gui", help="Launch the offline Gradio app (opens the browser)")
+    p.add_argument("--data-dir", default="data/raw")
+    p.add_argument("--out-dir", default="experiments/gui")
+    p.add_argument("--host", default="127.0.0.1")
+    p.add_argument("--port", type=int, default=7860)
+    p.add_argument("--no-browser", action="store_true")
+    p.set_defaults(func=_cmd_gui)
 
     args = parser.parse_args(argv)
     try:
